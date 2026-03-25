@@ -1,4 +1,5 @@
+import { redirect } from 'next/navigation';
 
-export default function LegacyPage() {
-  return null;
+export default function LabOwnerDashboardRedirect() {
+  redirect('/login');
 }
