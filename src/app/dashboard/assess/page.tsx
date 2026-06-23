@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Mic, 
-  MessageSquare, 
   Plus, 
   Send, 
   Paperclip, 
@@ -26,7 +25,8 @@ import {
   FileSearch,
   Stethoscope,
   ChevronRight,
-  ClipboardCheck
+  ClipboardCheck,
+  Brain
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -537,9 +537,9 @@ export default function AssessPage() {
       {!selectedPatientId ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
           <div className="bg-primary/5 p-6 rounded-full">
-            {role === 'clinician' ? <FileSearch className="h-12 w-12 text-primary/40" /> : <MessageSquare className="h-12 w-12 text-primary/40" />}
+            {role === 'clinician' ? <FileSearch className="h-12 w-12 text-primary/40" /> : <Brain className="h-12 w-12 text-primary/40" />}
           </div>
-          <h2 className="text-xl font-headline font-bold text-primary">{role === 'clinician' ? "Case Review Queue" : "Clinical Suggester"}</h2>
+          <h2 className="text-xl font-headline font-bold text-primary">{role === 'clinician' ? "Case Review Queue" : "AI Clinical Suggester"}</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
             {role === 'clinician' 
               ? "Select an urgent case from the queue to review CHW reports and certify clinical paths."

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from "react";
@@ -6,15 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  ClipboardList,
+  Brain,
   History,
   User,
-  Brain,
   MessageSquare,
-  Bell,
-  Activity,
   List,
-  Activity as DataIcon
+  Activity as DataIcon,
+  ClipboardList
 } from "lucide-react";
 import {
   Tooltip,
@@ -35,7 +32,12 @@ export function SidebarNav() {
 
   const baseItems = [
     { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/assess", icon: ClipboardList, label: role === 'clinician' ? "Review" : "Assess", roles: ['chw', 'clinician'] },
+    { 
+      href: "/dashboard/assess", 
+      icon: role === 'clinician' ? ClipboardList : Brain, 
+      label: role === 'clinician' ? "Review" : "AI", 
+      roles: ['chw', 'clinician'] 
+    },
     { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/analytics", icon: DataIcon, label: "Safety Data", roles: ['supervisor'] },
     { href: "/dashboard/history", icon: History, label: "Clinical History", roles: ['chw', 'clinician', 'supervisor'] },

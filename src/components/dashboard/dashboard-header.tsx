@@ -1,19 +1,21 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
   Search,
-  Settings,
   History,
   LogOut,
   User,
   MessageSquare,
   Bell,
   Menu,
-  Activity,
-  ClipboardList
+  Brain,
+  ClipboardList,
+  List,
+  Activity
 } from "lucide-react";
 
 import {
@@ -39,17 +41,30 @@ import { mockNotifications, mockUserProfile } from "@/lib/mock-data";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", icon: Home, label: "Home" },
-  { href: "/dashboard/assess", icon: ClipboardList, label: "Assess" },
-  { href: "/dashboard/analytics", icon: Activity, label: "Data" },
-  { href: "/dashboard/history", icon: History, label: "History" },
-  { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
-  { href: "/dashboard/profile", icon: User, label: "Profile" },
-];
-
 export function DashboardHeader() {
   const pathname = usePathname();
+  const [role, setRole] = useState('chw');
+
+  useEffect(() => {
+    const savedRole = localStorage.getItem('demo_role');
+    if (savedRole) setRole(savedRole);
+  }, []);
+
+  const navItems = [
+    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
+    { 
+      href: "/dashboard/assess", 
+      icon: role === 'clinician' ? ClipboardList : Brain, 
+      label: role === 'clinician' ? "Review" : "AI", 
+      roles: ['chw', 'clinician'] 
+    },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
+    { href: "/dashboard/history", icon: History, label: "History", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/chat", icon: MessageSquare, label: "Chat", roles: ['chw', 'clinician', 'supervisor'] },
+  ];
+
+  const filteredNavItems = navItems.filter(item => item.roles.includes(role));
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -62,7 +77,7 @@ export function DashboardHeader() {
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
           <nav className="grid gap-6 text-lg font-medium">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
