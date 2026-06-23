@@ -26,7 +26,8 @@ import {
   Download,
   X,
   AlertTriangle,
-  ShieldAlert
+  ShieldAlert,
+  WifiOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -63,7 +64,6 @@ function NewEncounterContent() {
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [hasConsent, setHasConsent] = useState(false);
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
-  const [isApproved, setIsApproved] = useState(false);
 
   // Patient Data State
   const initialPatient = patientId ? mockPatients.find(p => p.id === patientId) : null;
@@ -79,7 +79,9 @@ function NewEncounterContent() {
 
   const [historyData, setHistoryData] = useState({
     type: '',
+    otherType: '',
     semiology: [] as string[],
+    otherSemiology: '',
     duration: '',
     frequency: '',
     isRepeated: false,
@@ -94,6 +96,7 @@ function NewEncounterContent() {
     metabolicSuspicion: false,
     suddenOnsetNeurological: false,
     neckStiffness: false,
+    otherCause: '',
   });
 
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
@@ -107,14 +110,17 @@ function NewEncounterContent() {
   }, [patientData.dob, initialPatient]);
 
   const saveEncounterToHistory = (rec: Recommendation, isOverride: boolean = false) => {
+    const seizureTypeDisplay = historyData.type === 'other' ? historyData.otherType : historyData.type;
+    const semiologyDisplay = [...historyData.semiology.filter(s => s !== 'Other'), ...(historyData.otherSemiology ? [historyData.otherSemiology] : [])];
+
     const newEncounter: Encounter = {
       id: `e-${Date.now()}`,
       patientId: patientId || 'new-patient',
       date: new Date().toISOString(),
-      summary: `Guided assessment: ${historyData.type} episodes, semiology: ${historyData.semiology.join(', ')}. Symptoms lasted ${historyData.duration}m.`,
+      summary: `Guided assessment: ${seizureTypeDisplay} episodes, semiology: ${semiologyDisplay.join(', ')}. Symptoms lasted ${historyData.duration}m. ${causesData.otherCause ? `Other findings: ${causesData.otherCause}` : ''}`,
       redFlags: rec.detectedRedFlags,
       recommendation: {
-        action: rec.actionDescription,
+        action: rec.action,
         urgencyLevel: rec.urgencyLevel,
         referralDestination: rec.referralDestination,
         antiStigmaMessages: rec.counselingPoints,
@@ -136,7 +142,11 @@ function NewEncounterContent() {
     
     const input: ClinicalInput = {
       patientProfile: { age: calculatedAge, sex: patientData.sex, isPregnant: patientData.isPregnant, weightKg: Number(patientData.weight) },
-      seizureHistory: historyData,
+      seizureHistory: {
+        ...historyData,
+        type: historyData.type === 'other' ? historyData.otherType : historyData.type,
+        semiology: [...historyData.semiology.filter(s => s !== 'Other'), ...(historyData.otherSemiology ? [historyData.otherSemiology] : [])]
+      },
       underlyingCauses: causesData,
       redFlags: {
         repeated: historyData.isRepeated,
@@ -159,7 +169,6 @@ function NewEncounterContent() {
 
   const handleApprove = () => {
     if (recommendation) saveEncounterToHistory(recommendation);
-    setIsApproved(true);
     setStep('final');
     toast({ title: "Recommendation Approved", description: "Encounter logged to clinical history." });
   };
@@ -167,7 +176,6 @@ function NewEncounterContent() {
   const handleOverrideComplete = () => {
     if (recommendation) saveEncounterToHistory(recommendation, true);
     setShowOverrideDialog(false);
-    setIsApproved(true);
     setStep('final');
     toast({ title: "Override Logged", description: "Encounter registered with clinical discordance notes." });
   };
@@ -179,12 +187,12 @@ function NewEncounterContent() {
     }
   };
 
-  const toggleItem = (list: string[], item: string, setter: any) => {
-    setter((prev: any) => ({
+  const toggleItem = (list: 'semiology', item: string) => {
+    setHistoryData((prev) => ({
       ...prev,
-      [list as any]: prev[list as any].includes(item) 
-        ? prev[list as any].filter((i: string) => i !== item)
-        : [...prev[list as any], item]
+      [list]: prev[list].includes(item) 
+        ? prev[list].filter((i: string) => i !== item)
+        : [...prev[list], item]
     }));
   };
 
@@ -203,8 +211,10 @@ function NewEncounterContent() {
       {step !== 'final' && (
         <div className="flex flex-col gap-2 sticky top-0 bg-background pt-2 z-10">
           <div className="flex justify-between items-center px-1">
-            <h1 className="text-xl font-headline font-bold text-primary italic">Clinical Engine</h1>
-            <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">AI Protocol Analysis</Badge>
+            <h1 className="text-xl font-headline font-bold text-primary italic">Guided Encounter</h1>
+            <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground gap-1">
+              <WifiOff className="h-3 w-3" /> Offline Ready
+            </Badge>
           </div>
           <Progress value={stepProgress[step]} className="h-1.5" />
         </div>
@@ -214,22 +224,22 @@ function NewEncounterContent() {
         <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic">
-              <ClipboardCheck className="h-5 w-5" /> Informed Consent
+              <ClipboardCheck className="h-5 w-5" /> Patient Intake
             </CardTitle>
-            <CardDescription>Privacy & Ethics Governance (MoH Compliance)</CardDescription>
+            <CardDescription>Use this flow for new patient onboarding or in areas with limited internet connectivity.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="bg-muted/30 p-4 rounded-xl text-sm leading-relaxed text-slate-700">
-              <p className="font-bold mb-2">Notice to Patient/Caregiver:</p>
-              "We use a digital tool to help guide management. Your medical information is encrypted and stored securely per national policy. Do you agree to proceed?"
+              <p className="font-bold mb-2 underline">Privacy Notice & Consent:</p>
+              "I am using the AIEA digital tool to guide your care today. Your information is encrypted and stored per national safety policy. Do you consent to proceed with this evaluation?"
             </div>
             <div className="flex items-center space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
               <Checkbox id="consent" checked={hasConsent} onCheckedChange={c => setHasConsent(!!c)} />
-              <Label htmlFor="consent" className="text-xs font-bold leading-tight">
-                Consent obtained from patient or legal guardian.
+              <Label htmlFor="consent" className="text-xs font-bold leading-tight cursor-pointer">
+                Verbal consent obtained from patient or legal guardian.
               </Label>
             </div>
-            <Button className="w-full h-14 shadow-lg" disabled={!hasConsent} onClick={() => setStep('patient')}>Start Assessment</Button>
+            <Button className="w-full h-14 shadow-lg text-white font-bold" disabled={!hasConsent} onClick={() => setStep('patient')}>Start Encounter</Button>
           </CardContent>
         </Card>
       )}
@@ -237,29 +247,33 @@ function NewEncounterContent() {
       {step === 'patient' && (
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><UserCircle className="h-5 w-5" /> Patient Context</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><UserCircle className="h-5 w-5" /> 1. Patient Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Patient's name" readOnly={!!initialPatient} /></div>
-            <div className="space-y-2"><Label>Location / Address</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="Village or Sector" readOnly={!!initialPatient} /></div>
+            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Full legal name" readOnly={!!initialPatient} /></div>
+            <div className="space-y-2"><Label>Location / Sector</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="Village, Sector, or Cell" readOnly={!!initialPatient} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} readOnly={!!initialPatient} /></div>
               <div className="space-y-2"><Label>Sex</Label>
                 <Select value={patientData.sex} onValueChange={v => setPatientData({...patientData, sex: v})} disabled={!!initialPatient}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem></SelectContent>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </div>
             {patientData.sex === 'female' && (
               <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border border-dashed">
                 <Checkbox id="pregnant" checked={patientData.isPregnant} onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} />
-                <Label htmlFor="pregnant" className="text-xs font-bold leading-relaxed">Currently Pregnant? (High Risk)</Label>
+                <Label htmlFor="pregnant" className="text-xs font-bold leading-relaxed cursor-pointer">Currently Pregnant? (High Risk Profile)</Label>
               </div>
             )}
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setStep('consent')}><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button className="flex-1 shadow-md" onClick={() => setStep('history')}>Next <ChevronRight className="h-4 w-4" /></Button>
+              <Button className="flex-1 shadow-md text-white font-bold" onClick={() => setStep('history')}>Next <ChevronRight className="h-4 w-4" /></Button>
             </div>
           </CardContent>
         </Card>
@@ -268,43 +282,68 @@ function NewEncounterContent() {
       {step === 'history' && (
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Activity className="h-5 w-5" /> Seizure History</CardTitle>
-            <CardDescription>Structured semiology per WHO guidelines.</CardDescription>
+            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Activity className="h-5 w-5" /> 2. Seizure History</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Seizure Type</Label>
+              <Label>Seizure Category</Label>
               <Select value={historyData.type} onValueChange={v => setHistoryData({...historyData, type: v})}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select WHO category" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="convulsive">Convulsive (Generalized)</SelectItem>
                   <SelectItem value="non-convulsive">Non-convulsive (Focal/Absence)</SelectItem>
+                  <SelectItem value="other">Other / Unknown</SelectItem>
                 </SelectContent>
               </Select>
+              {historyData.type === 'other' && (
+                <Input 
+                  className="mt-2" 
+                  placeholder="Describe seizure type..." 
+                  value={historyData.otherType} 
+                  onChange={e => setHistoryData({...historyData, otherType: e.target.value})} 
+                />
+              )}
             </div>
             
             <div className="space-y-2">
-              <Label>Semiology (Signs)</Label>
+              <Label>Semiology (Observed Signs)</Label>
               <div className="grid grid-cols-2 gap-2">
-                {['Motor Jerking', 'Stiffness', 'Loss of Awareness', 'Tongue Biting'].map(s => (
-                  <Button key={s} type="button" variant={historyData.semiology.includes(s) ? 'default' : 'outline'} size="sm" className="h-8 text-[10px] uppercase font-bold" onClick={() => toggleItem('semiology', s, setHistoryData)}>{s}</Button>
+                {['Motor Jerking', 'Stiffness', 'Loss of Awareness', 'Tongue Biting', 'Other'].map(s => (
+                  <Button 
+                    key={s} 
+                    type="button" 
+                    variant={historyData.semiology.includes(s) ? 'default' : 'outline'} 
+                    size="sm" 
+                    className="h-8 text-[10px] uppercase font-bold" 
+                    onClick={() => toggleItem('semiology', s)}
+                  >
+                    {s}
+                  </Button>
                 ))}
               </div>
+              {historyData.semiology.includes('Other') && (
+                <Input 
+                  className="mt-2" 
+                  placeholder="Describe other signs..." 
+                  value={historyData.otherSemiology} 
+                  onChange={e => setHistoryData({...historyData, otherSemiology: e.target.value})} 
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="flex items-center gap-1"><Clock className="h-3 w-3" /> Duration (min)</Label><Input type="number" value={historyData.duration} onChange={e => setHistoryData({...historyData, duration: e.target.value})} placeholder="Min" /></div>
+              <div className="space-y-2"><Label className="flex items-center gap-1"><Clock className="h-3 w-3" /> Duration (min)</Label><Input type="number" value={historyData.duration} onChange={e => setHistoryData({...historyData, duration: e.target.value})} placeholder="e.g. 5" /></div>
               <div className="space-y-2"><Label>Freq (/month)</Label><Input type="number" value={historyData.frequency} onChange={e => setHistoryData({...historyData, frequency: e.target.value})} placeholder="e.g. 2" /></div>
             </div>
 
             <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border border-dashed">
               <Checkbox id="repeated" checked={historyData.isRepeated} onCheckedChange={c => setHistoryData({...historyData, isRepeated: !!c})} />
-              <Label htmlFor="repeated" className="text-xs font-bold leading-relaxed">Repeated seizures without recovery?</Label>
+              <Label htmlFor="repeated" className="text-xs font-bold leading-relaxed cursor-pointer">Repeated seizures without recovery between?</Label>
             </div>
 
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1" onClick={() => setStep('patient')}><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button className="flex-1 shadow-md" onClick={() => setStep('causes')}>Next <ChevronRight className="h-4 w-4" /></Button>
+              <Button className="flex-1 shadow-md text-white font-bold" onClick={() => setStep('causes')}>Next <ChevronRight className="h-4 w-4" /></Button>
             </div>
           </CardContent>
         </Card>
@@ -313,25 +352,38 @@ function NewEncounterContent() {
       {step === 'causes' && (
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Stethoscope className="h-5 w-5" /> Underlying Causes</CardTitle>
-            <CardDescription>Secondary causes for risk analysis.</CardDescription>
+            <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><Stethoscope className="h-5 w-5" /> 3. Underlying Causes</CardTitle>
+            <CardDescription>Secondary causes for risk stratification.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { id: 'fever', label: 'Current Fever (Suspected Infection)' },
-              { id: 'neckStiffness', label: 'Neck Stiffness (Meningitis sign)' },
-              { id: 'headTrauma', label: 'History of Severe Head Trauma' },
-              { id: 'perinatalInsult', label: 'Perinatal/Birth Insult history' },
-              { id: 'suddenOnsetNeurological', label: 'Sudden weakness/speech loss' }
-            ].map(cause => (
-              <div key={cause.id} className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                <Checkbox id={cause.id} checked={(causesData as any)[cause.id]} onCheckedChange={c => setCausesData({...causesData, [cause.id]: !!c})} />
-                <Label htmlFor={cause.id} className="text-xs font-bold leading-relaxed">{cause.label}</Label>
-              </div>
-            ))}
+            <div className="space-y-3">
+              {[
+                { id: 'fever', label: 'Current Fever (Suspected Infection)' },
+                { id: 'neckStiffness', label: 'Neck Stiffness (Meningitis sign)' },
+                { id: 'headTrauma', label: 'History of Severe Head Trauma' },
+                { id: 'perinatalInsult', label: 'Perinatal/Birth Insult history' },
+                { id: 'suddenOnsetNeurological', label: 'Sudden weakness/speech loss' }
+              ].map(cause => (
+                <div key={cause.id} className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                  <Checkbox id={cause.id} checked={(causesData as any)[cause.id]} onCheckedChange={c => setCausesData({...causesData, [cause.id]: !!c})} />
+                  <Label htmlFor={cause.id} className="text-xs font-bold leading-relaxed cursor-pointer">{cause.label}</Label>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Label className="text-xs font-bold uppercase text-muted-foreground">Other Relevant Findings</Label>
+              <Textarea 
+                placeholder="List any other symptoms or history..." 
+                value={causesData.otherCause} 
+                onChange={e => setCausesData({...causesData, otherCause: e.target.value})} 
+                className="rounded-xl min-h-[80px]"
+              />
+            </div>
+
             <div className="flex gap-2 pt-4">
               <Button variant="outline" className="flex-1" onClick={() => setStep('history')}><ChevronLeft className="h-4 w-4" /> Back</Button>
-              <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg" onClick={runAssessment}>Run AI Risk Analysis</Button>
+              <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg" onClick={runAssessment}>Run Risk Analysis</Button>
             </div>
           </CardContent>
         </Card>
@@ -341,24 +393,27 @@ function NewEncounterContent() {
         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <h3 className="text-xl font-bold font-headline text-primary italic">Analyzing Clinical Inputs...</h3>
-          <p className="text-sm text-muted-foreground">Mapping data to WHO mhGAP emergency protocols.</p>
+          <p className="text-sm text-muted-foreground">Mapping data to WHO mhGAP protocols.</p>
         </div>
       )}
 
       {step === 'report' && recommendation && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Card className="border-none shadow-lg overflow-hidden">
-            <CardHeader className={recommendation.urgencyLevel === 'EMERGENCY' ? "bg-red-600 text-white" : "bg-primary text-primary-foreground"}>
+          <Card className="border-none shadow-lg overflow-hidden bg-white">
+            <CardHeader className="border-b bg-white">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-headline italic">Clinical Suggestion</CardTitle>
-                <Badge variant="secondary" className="uppercase font-bold tracking-widest text-[10px]">
+                <CardTitle className="text-xl font-headline italic text-primary">Clinical Suggestion</CardTitle>
+                <Badge variant="outline" className={cn(
+                  "uppercase font-bold tracking-widest text-[10px]",
+                  recommendation.urgencyLevel === 'EMERGENCY' ? "border-red-600 text-red-600" : "border-primary text-primary"
+                )}>
                   {recommendation.urgencyLevel}
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-0 divide-y">
+            <CardContent className="p-0 divide-y bg-white">
               {recommendation.detectedRedFlags.length > 0 && (
-                <div className="p-4 bg-red-50 border-l-4 border-red-600">
+                <div className="p-4 bg-white border-l-4 border-red-600 mb-2">
                   <div className="flex items-center gap-2 mb-2 text-red-600">
                     <AlertTriangle className="h-4 w-4" />
                     <h4 className="text-[10px] font-bold uppercase tracking-widest">Emergency Triggers</h4>
@@ -371,7 +426,7 @@ function NewEncounterContent() {
                 </div>
               )}
 
-              <div className="p-4 space-y-5">
+              <div className="p-4 space-y-5 bg-white">
                 <section>
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-widest font-bold">1. Urgency Level</Label>
                   <p className={cn("text-lg font-bold mt-1", recommendation.urgencyLevel === 'EMERGENCY' ? "text-red-600" : "text-primary")}>{recommendation.urgencyLevel}</p>
@@ -384,7 +439,7 @@ function NewEncounterContent() {
 
                 <section>
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-widest font-bold">3. Personalized Follow-up Plan</Label>
-                  <div className="bg-muted/30 p-3 rounded-lg mt-1 border border-dashed">
+                  <div className="bg-muted/10 p-3 rounded-lg mt-1 border border-dashed">
                     <p className="text-sm font-medium text-slate-700 italic">"{recommendation.followUpPlan}"</p>
                   </div>
                 </section>
@@ -413,8 +468,8 @@ function NewEncounterContent() {
               </div>
 
               {recommendation.urgencyLevel !== 'ROUTINE' && (
-                <div className="p-4 bg-muted/5">
-                  <div className="flex items-center gap-2 mb-3 text-primary"><MapPin className="h-4 w-4" /><h3 className="text-[10px] font-bold uppercase tracking-tight italic">Recommended Referral Pathway</h3></div>
+                <div className="p-4 bg-white">
+                  <div className="flex items-center gap-2 mb-3 text-primary"><MapPin className="h-4 w-4" /><h3 className="text-[10px] font-bold uppercase tracking-tight italic">Recommended Referral Destination</h3></div>
                   <FacilityMap urgency={recommendation.urgencyLevel} patientLocation={patientData.location} />
                 </div>
               )}
@@ -422,7 +477,7 @@ function NewEncounterContent() {
           </Card>
 
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-14 font-bold shadow-lg bg-primary text-white" onClick={handleApprove}><CheckCircle2 className="mr-2" /> Approve Recommendation</Button>
+            <Button className="w-full h-14 font-bold shadow-lg bg-primary text-white" onClick={handleApprove}><CheckCircle2 className="mr-2 h-5 w-5" /> Approve Recommendation</Button>
             <Button variant="outline" className="w-full h-12" onClick={() => setShowOverrideDialog(true)}><Edit3 className="h-4 w-4 mr-2" /> Clinical Override</Button>
           </div>
         </div>
@@ -432,13 +487,13 @@ function NewEncounterContent() {
         <div className="space-y-6 animate-in zoom-in-95 duration-500 pb-20">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-headline font-bold text-primary italic">Final Report</h2>
-            <Badge className="bg-green-600">CERTIFIED</Badge>
+            <Badge className="bg-green-600 text-white">CERTIFIED</Badge>
           </div>
 
           <div id="clinical-report-content" className="bg-white p-8 border shadow-sm min-h-[600px] text-slate-900 leading-normal" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-            <div className="text-center border-b pb-6 mb-8 bg-white">
+            <div className="text-center border-b-2 border-primary pb-6 mb-8 bg-white">
               <h1 className="text-2xl font-bold uppercase tracking-tight">Clinical Encounter Report</h1>
-              <p className="text-sm font-bold text-muted-foreground mt-1 uppercase">AI Epilepsy Assistant • Confidential Record</p>
+              <p className="text-sm font-bold text-muted-foreground mt-1 uppercase">AI Epilepsy Assistant • Confidential medical Record</p>
               <p className="text-xs mt-2">Date: {format(new Date(), 'PPPP p')}</p>
             </div>
 
@@ -448,7 +503,7 @@ function NewEncounterContent() {
                 <div className="grid grid-cols-2 gap-y-2 text-sm">
                   <p><strong>Full Name:</strong> {patientData.name}</p>
                   <p><strong>Age / Sex:</strong> {calculatedAge}Y • {patientData.sex}</p>
-                  <p><strong>Address:</strong> {patientData.location}</p>
+                  <p><strong>Address:</strong> {patientData.location || 'Not recorded'}</p>
                 </div>
               </section>
 
@@ -459,11 +514,12 @@ function NewEncounterContent() {
                     <p><strong>Urgency Level:</strong> {recommendation.urgencyLevel}</p>
                     <p><strong>Action Type:</strong> {recommendation.action}</p>
                   </div>
-                  <div className="p-3 bg-white border rounded text-sm italic">
-                    <p><strong>Action Description:</strong> {recommendation.actionDescription}</p>
+                  <div className="p-4 bg-white border rounded text-sm italic">
+                    <p><strong>Clinical Summary:</strong> {`Assessment of ${historyData.type === 'other' ? historyData.otherType : historyData.type} episodes. Duration: ${historyData.duration}m. Semiology: ${[...historyData.semiology.filter(s => s !== 'Other'), ...(historyData.otherSemiology ? [historyData.otherSemiology] : [])].join(', ')}.`}</p>
+                    {causesData.otherCause && <p className="mt-2"><strong>Other Findings:</strong> {causesData.otherCause}</p>}
                   </div>
                   {recommendation.detectedRedFlags.length > 0 && (
-                    <div className="bg-white p-3 border border-red-100 rounded">
+                    <div className="bg-white p-3 border border-red-200 rounded">
                       <p className="text-xs font-bold text-red-600 uppercase mb-1 underline">Emergency Triggers Detected:</p>
                       <ul className="list-disc pl-5 text-sm font-bold text-red-900">
                         {recommendation.detectedRedFlags.map((flag, i) => <li key={i}>{flag}</li>)}
@@ -474,8 +530,11 @@ function NewEncounterContent() {
               </section>
 
               <section className="bg-white">
-                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Follow-up Plan</h2>
-                <p className="text-sm font-bold italic">"{recommendation.followUpPlan}"</p>
+                <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">3. Management Plan</h2>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Follow-up Plan:</strong> {recommendation.followUpPlan}</p>
+                  <p><strong>Action Description:</strong> {recommendation.actionDescription}</p>
+                </div>
               </section>
 
               <section className="bg-white">
@@ -515,7 +574,7 @@ function NewEncounterContent() {
                 <div className="text-sm space-y-1 italic">
                   <p><strong>Author:</strong> {mockUserProfile.name}</p>
                   <p><strong>Role:</strong> {mockUserProfile.role.toUpperCase()}</p>
-                  <p><strong>Sector:</strong> {mockUserProfile.location}</p>
+                  <p><strong>Facility:</strong> {mockUserProfile.location}</p>
                 </div>
               </section>
             </div>
@@ -523,7 +582,7 @@ function NewEncounterContent() {
 
           <div className="grid grid-cols-2 gap-3 pt-4">
             <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
-            <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Dismiss</Button>
+            <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return to Dashboard</Button>
           </div>
         </div>
       )}
@@ -533,13 +592,13 @@ function NewEncounterContent() {
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
             <DialogTitle className="font-headline italic text-primary">Clinical Decision Override</DialogTitle>
-            <DialogDescription>Documenting clinical discordance for quality audit.</DialogDescription>
+            <DialogDescription>Documenting clinical discordance for regional quality audit.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest">Reason</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest">Reason for Discordance</Label>
               <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
-                <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select reason" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="context">AI missed clinical context</SelectItem>
                   <SelectItem value="protocol">Local protocol variation</SelectItem>
@@ -549,10 +608,24 @@ function NewEncounterContent() {
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest">Justification Notes</Label>
-              <Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Describe reasoning..." className="rounded-xl min-h-[100px]" />
+              <Textarea 
+                value={overrideData.notes} 
+                onChange={e => setOverrideData({...overrideData, notes: e.target.value})} 
+                placeholder="Describe your reasoning for overriding the suggestive clinical protocol..." 
+                className="rounded-xl min-h-[100px]" 
+              />
             </div>
           </div>
-          <DialogFooter><Button variant="destructive" className="w-full h-14 font-bold rounded-2xl" disabled={!overrideData.reason} onClick={handleOverrideComplete}>Confirm Override</Button></DialogFooter>
+          <DialogFooter>
+            <Button 
+              variant="destructive" 
+              className="w-full h-14 font-bold rounded-2xl shadow-lg" 
+              disabled={!overrideData.reason || !overrideData.notes} 
+              onClick={handleOverrideComplete}
+            >
+              Confirm Clinical Override
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -564,7 +637,9 @@ function NewEncounterContent() {
             <DialogTitle className="text-2xl font-bold text-center">EMERGENCY PROTOCOL</DialogTitle>
             <DialogDescription className="sr-only">Safety alert for status epilepticus risk.</DialogDescription>
           </DialogHeader>
-          <p className="text-center text-lg leading-relaxed"><strong>STATUS EPILEPTICUS RISK</strong>. Immediate specialist intervention and facility referral required per national protocol.</p>
+          <p className="text-center text-lg leading-relaxed font-medium">
+            <strong>STATUS EPILEPTICUS RISK DETECTED</strong>. Immediate specialist intervention and facility referral required per national emergency protocol.
+          </p>
           <DialogFooter><Button onClick={() => setShowSafetyDialog(false)} className="w-full h-14 bg-white text-red-600 font-bold hover:bg-white/90">I ACKNOWLEDGE EMERGENCY</Button></DialogFooter>
         </DialogContent>
       </Dialog>
@@ -572,4 +647,4 @@ function NewEncounterContent() {
   );
 }
 
-export default function NewEncounterPage() { return <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>}><NewEncounterContent /></Suspense>; }
+export default function NewEncounterPage() { return <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}><NewEncounterContent /></Suspense>; }
