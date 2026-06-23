@@ -18,7 +18,7 @@ const fontPTSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'AI Epilepsy Assistant (Demo)',
+  title: 'AI Epilepsy Assistant (AIEA)',
   description:
     'Helping community health workers manage epilepsy in remote areas with AI-guided tools.',
 };
@@ -64,12 +64,12 @@ export default function RootLayout({
       </head>
       <body
         className={cn(
-          'min-h-screen bg-background font-body antialiased',
+          'min-h-screen bg-muted/30 font-body antialiased',
           fontPoppins.variable,
           fontPTSans.variable
         )}
       >
-        <div className="mx-auto max-w-md min-h-screen bg-background shadow-xl border-x">
+        <div className="min-h-screen flex flex-col">
           {children}
         </div>
         <Toaster />

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -24,7 +25,7 @@ export function MobileNav({ userRole }: MobileNavProps) {
   const navItems = baseItems.filter(item => !userRole || item.roles.includes(userRole));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t max-w-md mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t md:hidden">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -12,7 +13,8 @@ import {
   MessageSquare,
   Bell,
   Activity,
-  List
+  List,
+  Activity as DataIcon
 } from "lucide-react";
 import {
   Tooltip,
@@ -31,25 +33,27 @@ export function SidebarNav() {
     if (savedRole) setRole(savedRole);
   }, []);
 
-  const navItems = [
-    { href: "/dashboard", icon: Home, label: "Home" },
-    { href: "/dashboard/assess", icon: ClipboardList, label: role === 'clinician' ? "Review" : "Assess" },
-    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records" },
-    { href: "/dashboard/analytics", icon: Activity, label: "Data" },
-    { href: "/dashboard/history", icon: History, label: "History" },
-    { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
-    { href: "/dashboard/profile", icon: User, label: "Profile" },
+  const baseItems = [
+    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/assess", icon: ClipboardList, label: role === 'clinician' ? "Review" : "Assess", roles: ['chw', 'clinician'] },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/analytics", icon: DataIcon, label: "Safety Data", roles: ['supervisor'] },
+    { href: "/dashboard/history", icon: History, label: "Clinical History", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/chat", icon: MessageSquare, label: "Communication", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/account", icon: User, label: "My Account", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 
+  const navItems = baseItems.filter(item => item.roles.includes(role));
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
-      <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
+    <aside className="fixed inset-y-0 left-0 z-50 hidden w-14 flex-col border-r bg-background md:flex">
+      <nav className="flex flex-col items-center gap-4 px-2 py-5">
         <Link
-          href="/"
-          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+          href="/dashboard"
+          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base shadow-lg shadow-primary/20"
         >
-          <Brain className="h-4 w-4 transition-all group-hover:scale-110" />
-          <span className="sr-only">AIEA</span>
+          <Brain className="h-4 w-4 transition-all group-hover:scale-110 text-accent" />
+          <span className="sr-only">AIEA Assistant</span>
         </Link>
         <TooltipProvider>
           {navItems.map((item) => (
@@ -58,15 +62,15 @@ export function SidebarNav() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
-                    pathname === item.href && "bg-accent text-accent-foreground"
+                    "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:text-primary md:h-8 md:w-8",
+                    pathname === item.href && "bg-primary/5 text-primary"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className={cn("h-5 w-5", pathname === item.href && "fill-primary/10")} />
                   <span className="sr-only">{item.label}</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">{item.label}</TooltipContent>
+              <TooltipContent side="right" className="font-bold">{item.label}</TooltipContent>
             </Tooltip>
           ))}
         </TooltipProvider>
