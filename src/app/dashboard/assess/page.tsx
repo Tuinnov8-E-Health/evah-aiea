@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -26,7 +26,8 @@ import {
   Stethoscope,
   ChevronRight,
   ClipboardCheck,
-  Brain
+  Brain,
+  Search
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +57,7 @@ import { mockPatients, mockUserProfile, mockEncounters } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Encounter } from "@/lib/types";
 
 type Message = {
@@ -68,14 +69,16 @@ type Message = {
   recommendation?: Recommendation;
 };
 
-export default function AssessPage() {
+function AssessContent() {
   const { toast } = useToast();
   const { print } = usePrint();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlPatientId = searchParams.get('patientId');
 
   const [role, setRole] = useState<string>('chw');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(true);
+  const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -87,14 +90,19 @@ export default function AssessPage() {
   const [patients, setPatients] = useState<any[]>([]);
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
   const [activeRecommendation, setActiveRecommendation] = useState<Recommendation | null>(null);
-  
   const [conversationStage, setConversationStage] = useState(0); 
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role') || 'chw';
     setRole(savedRole);
     setPatients(mockPatients);
-  }, []);
+
+    if (urlPatientId) {
+      handleSelectPatient(urlPatientId);
+    } else {
+      setShowPatientPicker(true);
+    }
+  }, [urlPatientId]);
 
   const selectedPatient = patients?.find(p => p.id === selectedPatientId);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -107,19 +115,40 @@ export default function AssessPage() {
 
   const handleSelectPatient = (id: string) => {
     setSelectedPatientId(id);
-    setShowHistory(false);
+    setShowPatientPicker(false);
     
     if (role === 'clinician') return;
 
     setConversationStage(0);
+    const patientName = patients?.find(p => p.id === id)?.name || "the patient";
     setMessages([
       {
         id: '1',
         role: 'ai',
-        content: `I'm ready to assist with ${patients?.find(p => p.id === id)?.name}. Describe symptoms or upload reports for WHO-aligned suggestive analysis. Decision authority remains with you.`,
+        content: `I have loaded the clinical history for ${patientName}. Describe current symptoms or upload reports for WHO-aligned suggestive analysis.`,
         type: 'text'
       }
     ]);
+  };
+
+  const handleSendText = () => {
+    if (!inputText.trim()) return;
+
+    // Check for @mention logic
+    if (inputText.startsWith('@')) {
+      const mentionName = inputText.slice(1).toLowerCase();
+      const matchedPatient = patients.find(p => p.name.toLowerCase().includes(mentionName));
+      if (matchedPatient) {
+        handleSelectPatient(matchedPatient.id);
+        setInputText("");
+        return;
+      }
+    }
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: inputText };
+    setMessages(prev => [...prev, userMsg]);
+    setInputText("");
+    processClinicalConversation(inputText);
   };
 
   const saveEncounterToHistory = (recommendation: Recommendation, isOverride: boolean = false) => {
@@ -149,14 +178,6 @@ export default function AssessPage() {
 
     const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
     localStorage.setItem('session_encounters', JSON.stringify([...existingLogs, newEncounter]));
-  };
-
-  const handleSendText = () => {
-    if (!inputText.trim()) return;
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: inputText };
-    setMessages(prev => [...prev, userMsg]);
-    setInputText("");
-    processClinicalConversation(inputText);
   };
 
   const startRecording = () => {
@@ -269,7 +290,7 @@ export default function AssessPage() {
       .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
     return (
-      <div className="max-w-md mx-auto space-y-6 pb-20">
+      <div className="max-w-3xl mx-auto space-y-6 pb-20">
         <header className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSelectedPatientId(null)}><ChevronLeft /></Button>
           <div>
@@ -488,23 +509,17 @@ export default function AssessPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-130px)] bg-background relative overflow-hidden">
-      <div className={cn("absolute inset-0 z-50 bg-background transition-transform duration-300 ease-in-out", showHistory ? "translate-x-0" : "-translate-x-full")}>
+    <div className="flex flex-col h-[calc(100vh-130px)] bg-background relative overflow-hidden max-w-5xl mx-auto border-x">
+      {/* Patient Picker Layer */}
+      <div className={cn("absolute inset-0 z-50 bg-background transition-transform duration-300 ease-in-out", showPatientPicker ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex items-center justify-between bg-primary text-primary-foreground">
             <h2 className="font-headline font-bold flex items-center gap-2">
-              {role === 'clinician' ? <FileSearch className="h-5 w-5" /> : <History className="h-5 w-5" />} 
-              {role === 'clinician' ? "Specialist Review Queue" : "Patient Registry"}
+              {role === 'clinician' ? <FileSearch className="h-5 w-5" /> : <Search className="h-5 w-5" />} 
+              {role === 'clinician' ? "Specialist Review Queue" : "Select Patient to Analyze"}
             </h2>
-            <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}><X className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setShowPatientPicker(false)}><X className="h-5 w-5" /></Button>
           </div>
-          {role === 'chw' && (
-            <div className="p-4">
-              <Button asChild className="w-full justify-start gap-2 h-12" variant="outline">
-                <Link href="/dashboard/new-encounter"><Plus className="h-5 w-5 text-primary" /> New Guided Encounter</Link>
-              </Button>
-            </div>
-          )}
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-2 py-4">
               {patients.length > 0 ? (
@@ -517,11 +532,9 @@ export default function AssessPage() {
                       <Badge variant="outline" className={cn("text-[10px] uppercase", patient.status === 'Urgent' ? "border-red-200 text-red-600 bg-red-50" : "")}>{patient.status}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
-                    {role === 'clinician' && (
-                      <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary uppercase">
-                        <ChevronRight className="h-3 w-3" /> Review Latest Report
-                      </div>
-                    )}
+                    <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary uppercase">
+                      <ChevronRight className="h-3 w-3" /> Select for AI Analysis
+                    </div>
                   </button>
                 ))
               ) : (
@@ -539,28 +552,26 @@ export default function AssessPage() {
           <div className="bg-primary/5 p-6 rounded-full">
             {role === 'clinician' ? <FileSearch className="h-12 w-12 text-primary/40" /> : <Brain className="h-12 w-12 text-primary/40" />}
           </div>
-          <h2 className="text-xl font-headline font-bold text-primary">{role === 'clinician' ? "Case Review Queue" : "AI Clinical Suggester"}</h2>
+          <h2 className="text-xl font-headline font-bold text-primary">AI Clinical Assistant</h2>
           <p className="text-sm text-muted-foreground max-w-xs">
-            {role === 'clinician' 
-              ? "Select an urgent case from the queue to review CHW reports and certify clinical paths."
-              : "Decision authority remains with you. Select a patient to begin mhGAP suggestive analysis."}
+            Start by selecting a patient from your registry or type @patient_name in the chat to begin analysis.
           </p>
-          <Button onClick={() => setShowHistory(true)} variant="outline" className="gap-2">
-            <History className="h-4 w-4" /> {role === 'clinician' ? "Open Review Queue" : "Open Registry"}
+          <Button onClick={() => setShowPatientPicker(true)} variant="outline" className="gap-2">
+            <Search className="h-4 w-4" /> Open Registry Picker
           </Button>
         </div>
       ) : (
         <>
           <header className="p-3 border-b bg-card flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => setShowHistory(true)}><ChevronLeft className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setShowPatientPicker(true)}><ChevronLeft className="h-5 w-5" /></Button>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-bold truncate">{selectedPatient?.name}</span>
                 <Badge variant="secondary" className="h-4 text-[9px]">{selectedPatient?.status}</Badge>
               </div>
-              <p className="text-[10px] text-muted-foreground truncate">{selectedPatient?.location} • AI Assisted • SUGGESTIONS ONLY</p>
+              <p className="text-[10px] text-muted-foreground truncate">{selectedPatient?.location} • AI Context Active</p>
             </div>
-            <Button variant="ghost" size="icon"><MoreVertical className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setSelectedPatientId(null)} title="Clear Selection"><X className="h-5 w-5" /></Button>
           </header>
           <ScrollArea ref={scrollRef} className="flex-1 p-4">
             <div className="space-y-6 pb-4">
@@ -573,15 +584,6 @@ export default function AssessPage() {
                   )}>
                     {msg.type === 'audio' && <div className="flex items-center gap-2 mb-1 opacity-70 text-[10px] font-bold uppercase"><Mic className="h-3 w-3" /> Voice Input</div>}
                     {msg.type === 'question' && <div className="flex items-center gap-2 mb-1 text-primary text-[10px] font-bold uppercase"><Sparkles className="h-3 w-3" /> Clarifying Question</div>}
-                    {msg.type === 'file' && (
-                      <div className="flex items-center gap-3 mb-2 p-2 bg-white/10 rounded-lg">
-                        <FileText className="h-8 w-8 text-accent" />
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold uppercase tracking-tight">Document Scan</span>
-                          <span className="text-xs font-mono">{msg.fileName}</span>
-                        </div>
-                      </div>
-                    )}
                     {msg.content}
                   </div>
                   {msg.type === 'analysis' && msg.recommendation && (
@@ -603,12 +605,6 @@ export default function AssessPage() {
                           </div>
                         </CardContent>
                       </Card>
-                      {msg.recommendation.urgencyLevel !== 'ROUTINE' && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2">
-                          <div className="flex items-center gap-2 text-primary px-1"><MapPin className="h-3 w-3" /><span className="text-[10px] font-bold uppercase tracking-widest">Nearest Referral Pathway</span></div>
-                          <FacilityMap urgency={msg.recommendation.urgencyLevel} patientLocation={selectedPatient?.location} />
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -634,7 +630,7 @@ export default function AssessPage() {
               <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground shrink-0 hover:bg-muted" onClick={() => toast({ title: "Check Governance", description: "Minimal PII scanning enabled for clinical records." })}><Paperclip className="h-5 w-5" /></Button>
               <div className="flex-1 relative">
                 <Textarea 
-                  placeholder="Type clinical observations..." 
+                  placeholder="Type observations or @name..." 
                   value={inputText} 
                   onChange={(e) => setInputText(e.target.value)} 
                   className="min-h-[40px] max-h-[120px] pr-10 resize-none py-2 rounded-2xl bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary" 
@@ -648,6 +644,7 @@ export default function AssessPage() {
         </>
       )}
 
+      {/* Override Dialog */}
       <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
@@ -687,4 +684,12 @@ export default function AssessPage() {
       </Dialog>
     </div>
   );
+}
+
+export default function AssessPage() { 
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}>
+      <AssessContent />
+    </Suspense>
+  ); 
 }

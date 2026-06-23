@@ -15,7 +15,9 @@ import {
   Mail,
   ChevronRight,
   Info,
-  CalendarClock
+  CalendarClock,
+  Sparkles,
+  Brain
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -103,7 +105,6 @@ export default function RecordsPage() {
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Determine which tabs to show based on role
   const tabConfig = isSupervisor 
     ? { count: 4, tabs: ['patients', 'clinicians', 'chws', 'facilities'] }
     : isClinician 
@@ -435,8 +436,13 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
             {!isRestricted && (
               <>
                 <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/assess?patientId=${patient.id}`}>
+                    <Brain className="mr-2 h-4 w-4" /> AI Assessment
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
-                    <UserPlus className="mr-2 h-4 w-4" /> New Assessment
+                    <UserPlus className="mr-2 h-4 w-4" /> Guided Encounter
                   </Link>
                 </DropdownMenuItem>
               </>

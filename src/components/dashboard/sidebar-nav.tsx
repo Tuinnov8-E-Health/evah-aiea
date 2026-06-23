@@ -35,14 +35,14 @@ export function SidebarNav() {
     { 
       href: "/dashboard/assess", 
       icon: role === 'clinician' ? ClipboardList : Brain, 
-      label: role === 'clinician' ? "Review" : "AI", 
+      label: role === 'clinician' ? "Review" : "AI Assistant", 
       roles: ['chw', 'clinician'] 
     },
-    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Registry Management" : "Patient Registry", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/analytics", icon: DataIcon, label: "Safety Data", roles: ['supervisor'] },
-    { href: "/dashboard/history", icon: History, label: "Clinical History", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/chat", icon: MessageSquare, label: "Communication", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/account", icon: User, label: "My Account", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/history", icon: History, label: "Regional History", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/chat", icon: MessageSquare, label: "Clinical Chat", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/account", icon: User, label: "My Profile", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 
   const navItems = baseItems.filter(item => item.roles.includes(role));
@@ -65,10 +65,10 @@ export function SidebarNav() {
                   href={item.href}
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:text-primary md:h-8 md:w-8",
-                    pathname === item.href && "bg-primary/5 text-primary"
+                    (pathname === item.href || (item.href === '/dashboard/assess' && pathname.startsWith('/dashboard/assess'))) && "bg-primary/5 text-primary"
                   )}
                 >
-                  <item.icon className={cn("h-5 w-5", pathname === item.href && "fill-primary/10")} />
+                  <item.icon className={cn("h-5 w-5", (pathname === item.href || (item.href === '/dashboard/assess' && pathname.startsWith('/dashboard/assess'))) && "fill-primary/10")} />
                   <span className="sr-only">{item.label}</span>
                 </Link>
               </TooltipTrigger>

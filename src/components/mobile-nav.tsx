@@ -32,7 +32,7 @@ export function MobileNav({ userRole }: MobileNavProps) {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t md:hidden">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href === '/dashboard/assess' && pathname.startsWith('/dashboard/assess'));
           return (
             <Link
               key={item.href}
@@ -48,9 +48,6 @@ export function MobileNav({ userRole }: MobileNavProps) {
               </span>
               {isActive && (
                 <div className="absolute top-0 h-1 w-8 bg-primary rounded-b-full" />
-              )}
-              {item.label === 'Alerts' && (
-                <div className="absolute top-2 right-1/4 h-2 w-2 bg-red-500 rounded-full border border-white" />
               )}
             </Link>
           );

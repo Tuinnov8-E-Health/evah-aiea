@@ -12,7 +12,8 @@ import {
   UserCheck,
   Stethoscope,
   Building2,
-  CalendarClock
+  CalendarClock,
+  Brain
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -74,7 +75,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Universal Stats for all care roles */}
+        {/* Universal Stats */}
         <Card className="bg-primary/5 border-primary/10 col-span-2">
           <CardHeader className="p-4 pb-0">
             <Users className="h-5 w-5 text-primary" />
@@ -87,7 +88,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Urgent Alerts - Crucial for CHW and Clinicians */}
         <Card className="bg-red-50 border-red-100">
           <CardHeader className="p-4 pb-0">
             <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -98,7 +98,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Role Specific Stats */}
         {isSupervisor && (
           <>
             <Card className="bg-primary/5 border-primary/10">
@@ -149,9 +148,9 @@ export default function Dashboard() {
 
       {isCHW && (
         <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
-          <Link href="/dashboard/new-encounter">
-            <UserPlus className="h-6 w-6" />
-            New Encounter
+          <Link href="/dashboard/assess">
+            <Brain className="h-6 w-6" />
+            Open AI Assistant
           </Link>
         </Button>
       )}
@@ -201,12 +200,9 @@ export default function Dashboard() {
                             followUpDays === 0 ? "border-red-200 text-red-600 bg-red-50" : "text-muted-foreground"
                           )}>
                             <CalendarClock className="h-3 w-3" />
-                            {followUpDays === 0 ? "Follow-up Due Today" : `Follow-up in ${followUpDays} Days`}
+                            {followUpDays === 0 ? "Follow-up Due" : `Follow-up in ${followUpDays} Days`}
                           </Badge>
                         </div>
-                        {(isClinician || isSupervisor) && patient.chwName && (
-                          <p className="text-[10px] font-bold text-primary/60 uppercase truncate">CHW: {patient.chwName}</p>
-                        )}
                       </div>
                     </div>
                     
@@ -220,15 +216,22 @@ export default function Dashboard() {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {isCHW && (
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
-                              <UserPlus className="mr-2 h-4 w-4" /> Start Encounter
-                            </Link>
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/assess?patientId=${patient.id}`}>
+                                <Brain className="mr-2 h-4 w-4" /> AI Assessment
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/new-encounter?patientId=${patient.id}`}>
+                                <UserPlus className="mr-2 h-4 w-4" /> Guided Encounter
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
                         )}
                         <DropdownMenuItem asChild>
                           <Link href={`/dashboard/records/${patient.id}/history`}>
-                            <History className="mr-2 h-4 w-4" /> View History
+                            <History className="mr-2 h-4 w-4" /> Full History
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
