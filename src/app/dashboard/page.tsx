@@ -13,7 +13,8 @@ import {
   Stethoscope,
   Building2,
   CalendarClock,
-  Brain
+  Brain,
+  ClipboardPlus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -147,12 +148,20 @@ export default function Dashboard() {
       </div>
 
       {isCHW && (
-        <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
-          <Link href="/dashboard/assess">
-            <Brain className="h-6 w-6" />
-            Open AI Assistant
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-3">
+          <Button asChild size="lg" variant="outline" className="w-full h-16 text-lg font-headline gap-3 border-primary text-primary hover:bg-primary/5 shadow-sm">
+            <Link href="/dashboard/new-encounter">
+              <ClipboardPlus className="h-6 w-6" />
+              Start New Encounter
+            </Link>
+          </Button>
+          <Button asChild size="lg" className="w-full h-16 text-lg font-headline gap-3 shadow-lg shadow-primary/20">
+            <Link href="/dashboard/assess">
+              <Brain className="h-6 w-6" />
+              Open AI Assistant
+            </Link>
+          </Button>
+        </div>
       )}
 
       <div className="space-y-4">
