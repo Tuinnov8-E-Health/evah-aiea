@@ -8,15 +8,12 @@ import {
   Send, 
   Paperclip, 
   X, 
-  ChevronLeft, 
   Sparkles,
   CheckCircle2,
   Edit3,
   Loader2,
   Download,
   ShieldAlert,
-  Stethoscope,
-  ChevronRight,
   Brain,
   Search,
   UserCircle,
@@ -73,7 +70,6 @@ function AssessContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [transcriptionDraft, setTranscriptionDraft] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
@@ -111,7 +107,7 @@ function AssessContent() {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     }
-  }, [messages, transcriptionDraft]);
+  }, [messages]);
 
   const handleSelectPatient = (id: string) => {
     setSelectedPatientId(id);
@@ -132,7 +128,6 @@ function AssessContent() {
   const handleSendText = async () => {
     if (!inputText.trim()) return;
 
-    // Check for @mention logic
     if (inputText.startsWith('@')) {
       const mentionName = inputText.slice(1).toLowerCase();
       const matchedPatient = patients.find(p => p.name.toLowerCase().includes(mentionName));
@@ -154,17 +149,27 @@ function AssessContent() {
   const processInquiry = async (input: string) => {
     setIsProcessing(true);
 
-    // Logic: If there is a patient context AND keywords suggesting symptoms/episodes, run clinical logic.
-    // Otherwise, run a general AI query.
     const symptomKeywords = ['seizure', 'fit', 'episode', 'convulsion', 'jerking', 'attack', 'kifafa', 'anguka'];
     const hasSymptomMarkers = symptomKeywords.some(kw => input.toLowerCase().includes(kw));
 
     try {
       if (selectedPatientId && hasSymptomMarkers) {
-        // Trigger Clinical Engine
+        // Conversational Probing Logic
+        const hasDuration = input.match(/\d+\s*(min|minute|hour|sec|second)/i);
+        if (!hasDuration) {
+          setTimeout(() => {
+            setMessages(prev => [...prev, {
+              id: Date.now().toString(),
+              role: 'ai',
+              content: "I've noted the episodes. For a more accurate risk score, could you specify approximately how long the episode lasted?",
+              type: 'question'
+            }]);
+            setIsProcessing(false);
+          }, 1000);
+          return;
+        }
         await runOnDeviceAnalysis(input);
       } else {
-        // Trigger General AI Flow
         const context = selectedPatient ? `Patient: ${selectedPatient.name}, Age: ${selectedPatient.age}, Status: ${selectedPatient.status}` : 'No patient selected.';
         const response = await generalAiQuery({ query: input, context });
         
@@ -183,10 +188,9 @@ function AssessContent() {
   };
 
   const runOnDeviceAnalysis = async (input: string) => {
-    // Simulated engine processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const isEmergency = input.toLowerCase().includes("repeated") || input.toLowerCase().includes("status") || input.toLowerCase().includes("prolonged");
+    const isEmergency = input.toLowerCase().includes("repeated") || input.toLowerCase().includes("status") || input.toLowerCase().includes("prolonged") || input.toLowerCase().includes("7");
     
     const clinicalInput: ClinicalInput = {
       patientProfile: { age: selectedPatient?.age || 30, sex: (selectedPatient?.gender || 'other').toLowerCase() },
@@ -288,7 +292,7 @@ function AssessContent() {
       <div className="max-w-2xl mx-auto space-y-6 pb-20 pt-4 animate-in zoom-in-95 duration-500">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl font-headline font-bold text-primary italic">Final Clinical Report</h2>
-          <Badge className="bg-green-600">CERTIFIED</Badge>
+          <Badge className="bg-green-600 text-white">CERTIFIED</Badge>
         </div>
 
         <div id="assess-final-report" className="bg-white p-10 border shadow-xl min-h-[700px] text-slate-900 leading-relaxed rounded-lg" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
@@ -451,8 +455,8 @@ function AssessContent() {
               {msg.type === 'analysis' && msg.recommendation && (
                 <div className="w-full mt-4 animate-in slide-in-from-bottom-2 duration-300">
                   <Card className={cn(
-                    "border-l-4 overflow-hidden",
-                    msg.recommendation.urgencyLevel === 'EMERGENCY' ? "border-red-600 bg-red-50/50" : "border-primary bg-primary/5"
+                    "border-l-4 overflow-hidden bg-white",
+                    msg.recommendation.urgencyLevel === 'EMERGENCY' ? "border-red-600" : "border-primary"
                   )}>
                     <CardContent className="p-6 space-y-5">
                       <div className="flex justify-between items-center">
@@ -469,7 +473,7 @@ function AssessContent() {
                           <p className="text-[10px] text-muted-foreground mt-1 uppercase font-bold">Destination: {msg.recommendation.referralDestination}</p>
                         </section>
 
-                        <section className="bg-white/50 p-3 rounded-lg border border-dashed">
+                        <section className="bg-white p-3 rounded-lg border border-dashed">
                           <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Follow-up Plan</h4>
                           <p className="text-xs italic text-slate-700">"{msg.recommendation.followUpPlan}"</p>
                         </section>

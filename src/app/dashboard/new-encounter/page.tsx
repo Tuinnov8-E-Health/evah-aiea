@@ -11,9 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   ChevronRight, 
   ChevronLeft, 
-  Sparkles,
-  UserCircle,
-  TriangleAlert,
+  UserCircle, 
   Loader2,
   Edit3,
   MapPin,
@@ -439,12 +437,12 @@ function NewEncounterContent() {
 
                 <section>
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-widest font-bold">3. Personalized Follow-up Plan</Label>
-                  <div className="bg-muted/10 p-3 rounded-lg mt-1 border border-dashed">
+                  <div className="bg-white p-3 rounded-lg mt-1 border border-dashed">
                     <p className="text-sm font-medium text-slate-700 italic">"{recommendation.followUpPlan}"</p>
                   </div>
                 </section>
                 
-                <section className="bg-primary/5 p-3 rounded-lg border border-dashed border-primary/20">
+                <section className="bg-white p-3 rounded-lg border border-dashed border-primary/20">
                   <Label className="text-[10px] uppercase text-primary tracking-widest font-bold flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> 4. Counseling & Safety Warnings</Label>
                   <div className="space-y-3">
                     <div>
