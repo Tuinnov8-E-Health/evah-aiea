@@ -9,7 +9,6 @@ import {
   History,
   LogOut,
   User,
-  MessageSquare,
   Bell,
   Menu,
   Brain,
@@ -61,7 +60,6 @@ export function DashboardHeader() {
     { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
     { href: "/dashboard/history", icon: History, label: "History", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/chat", icon: MessageSquare, label: "Chat", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));

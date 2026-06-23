@@ -8,7 +8,6 @@ import {
   Brain,
   History,
   User,
-  MessageSquare,
   List,
   Activity as DataIcon,
   ClipboardList
@@ -41,7 +40,6 @@ export function SidebarNav() {
     { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Registry Management" : "Patient Registry", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/analytics", icon: DataIcon, label: "Safety Data", roles: ['supervisor'] },
     { href: "/dashboard/history", icon: History, label: "Regional History", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/chat", icon: MessageSquare, label: "Clinical Chat", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/account", icon: User, label: "My Profile", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 
