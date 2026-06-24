@@ -1,10 +1,11 @@
+
 import { AlertCircle, Calendar, ClipboardCheck } from 'lucide-react';
 import type { Notification, Patient, UserProfile, Encounter } from './types';
 import type { HealthFacility } from './clinical-engine/types';
-import { addDays, subDays } from 'date-fns';
+import { addDays, subDays, subYears } from 'date-fns';
 
 /**
- * @fileOverview WHO mhGAP-aligned mock data for the AI Epilepsy Assistant prototype.
+ * @fileOverview FHIR-aligned mock data for the AI Epilepsy Assistant prototype.
  */
 
 export const mockNotifications: Notification[] = [
@@ -36,12 +37,13 @@ export const mockUserProfile: UserProfile = {
 export const mockPatients: Patient[] = [
   { 
     id: 'p1', 
+    active: true,
     name: 'Zahara Hassan', 
-    age: 24, 
-    gender: 'Female', 
-    location: 'Kijiji Village', 
+    birthDate: subYears(new Date(), 24).toISOString().split('T')[0],
+    gender: 'female', 
+    address: { text: 'Kijiji Village', city: 'Local' },
     status: 'Urgent', 
-    contact: '+254 711 000 111', 
+    telecom: { system: 'phone', value: '+254 711 000 111' },
     updatedAt: new Date().toISOString(), 
     nextFollowUpDate: new Date().toISOString(),
     chwId: 'chw1', 
@@ -49,12 +51,13 @@ export const mockPatients: Patient[] = [
   },
   { 
     id: 'p2', 
+    active: true,
     name: 'John Kamau', 
-    age: 45, 
-    gender: 'Male', 
-    location: 'Mlimani Sector', 
+    birthDate: subYears(new Date(), 45).toISOString().split('T')[0],
+    gender: 'male', 
+    address: { text: 'Mlimani Sector', city: 'Local' },
     status: 'Stable', 
-    contact: '+254 722 000 222', 
+    telecom: { system: 'phone', value: '+254 722 000 222' },
     updatedAt: new Date().toISOString(), 
     nextFollowUpDate: addDays(new Date(), 14).toISOString(),
     chwId: 'chw2', 
@@ -62,12 +65,13 @@ export const mockPatients: Patient[] = [
   },
   { 
     id: 'p3', 
+    active: true,
     name: 'Amina Juma', 
-    age: 12, 
-    gender: 'Female', 
-    location: 'Pwani Area', 
+    birthDate: subYears(new Date(), 12).toISOString().split('T')[0],
+    gender: 'female', 
+    address: { text: 'Pwani Area', city: 'Local' },
     status: 'Follow-up', 
-    contact: '+254 733 000 333', 
+    telecom: { system: 'phone', value: '+254 733 000 333' },
     updatedAt: new Date().toISOString(), 
     nextFollowUpDate: addDays(new Date(), 3).toISOString(),
     chwId: 'chw1', 
@@ -75,53 +79,15 @@ export const mockPatients: Patient[] = [
   },
   { 
     id: 'p4', 
+    active: true,
     name: 'David Omondi', 
-    age: 31, 
-    gender: 'Male', 
-    location: 'Ziwani Block', 
+    birthDate: subYears(new Date(), 31).toISOString().split('T')[0],
+    gender: 'male', 
+    address: { text: 'Ziwani Block', city: 'Local' },
     status: 'Stable', 
-    contact: '+254 744 000 444', 
+    telecom: { system: 'phone', value: '+254 744 000 444' },
     updatedAt: new Date(Date.now() - 86400000).toISOString(), 
     nextFollowUpDate: addDays(new Date(), 21).toISOString(),
-    chwId: 'chw2', 
-    chwName: 'Grace Achieng' 
-  },
-  { 
-    id: 'p5', 
-    name: 'Samuel Kiprop', 
-    age: 8, 
-    gender: 'Male', 
-    location: 'Kapchorwa', 
-    status: 'Urgent', 
-    contact: '+254 755 000 555', 
-    updatedAt: new Date().toISOString(), 
-    nextFollowUpDate: new Date().toISOString(),
-    chwId: 'chw3', 
-    chwName: 'Grace Achieng' 
-  },
-  { 
-    id: 'p6', 
-    name: 'Fatima Ali', 
-    age: 29, 
-    gender: 'Female', 
-    location: 'North Garissa', 
-    status: 'Follow-up', 
-    contact: '+254 766 000 666', 
-    updatedAt: new Date().toISOString(), 
-    nextFollowUpDate: addDays(new Date(), 5).toISOString(),
-    chwId: 'chw1', 
-    chwName: 'Alex Mutua' 
-  },
-  { 
-    id: 'p7', 
-    name: 'Peter Njoroge', 
-    age: 52, 
-    gender: 'Male', 
-    location: 'Central Muranga', 
-    status: 'Urgent', 
-    contact: '+254 777 000 777', 
-    updatedAt: new Date().toISOString(), 
-    nextFollowUpDate: new Date().toISOString(),
     chwId: 'chw2', 
     chwName: 'Grace Achieng' 
   },
@@ -130,50 +96,17 @@ export const mockPatients: Patient[] = [
 export const mockEncounters: Encounter[] = [
   {
     id: 'e1',
-    patientId: 'p1',
+    status: 'finished',
+    subject: 'p1',
     date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated. Patient was stabilized and referral to tertiary hospital recommended.',
+    summary: 'Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated.',
     redFlags: ['Status Epilepticus Risk (Duration >= 5m)', 'Repeated Seizures (Cluster Risk)'],
     recommendation: { 
       action: 'Refer', 
       urgencyLevel: 'EMERGENCY',
       referralDestination: 'KUTRRH Specialist Unit',
-      antiStigmaMessages: ["Epilepsy is a medical condition of the brain.", "Epilepsy is NOT contagious."],
-      safetyAdvice: ["Avoid cooking over open fires alone.", "First Aid: Turn on side, cushion head, NO items in mouth."]
-    },
-    type: 'Emergency',
-    authorName: 'Alex Mutua',
-    authorRole: 'CHW'
-  },
-  {
-    id: 'e2',
-    patientId: 'p5',
-    date: subDays(new Date(), 1).toISOString(),
-    summary: 'New onset seizures in pediatric patient (8 years old). Reported 3 episodes in last 24 hours. No fever reported.',
-    redFlags: ['Repeated Seizures (Cluster Risk)'],
-    recommendation: { 
-      action: 'Refer', 
-      urgencyLevel: 'URGENT',
-      referralDestination: 'District Hospital',
-      antiStigmaMessages: ["Education is possible for children with epilepsy."],
-      safetyAdvice: ["Supervise while swimming or bathing."]
-    },
-    type: 'Routine',
-    authorName: 'Grace Achieng',
-    authorRole: 'CHW'
-  },
-  {
-    id: 'e3',
-    patientId: 'p7',
-    date: new Date().toISOString(),
-    summary: 'Sudden onset neurological weakness following generalized seizure. High risk of acute stroke or structural insult.',
-    redFlags: ['Suspected Stroke/Acute Neurological Insult'],
-    recommendation: { 
-      action: 'Refer', 
-      urgencyLevel: 'EMERGENCY',
-      referralDestination: 'Regional Referral Hospital',
-      antiStigmaMessages: ["Immediate medical attention is vital."],
-      safetyAdvice: ["Do not leave patient alone until stable."]
+      antiStigmaMessages: ["Epilepsy is medical condition.", "Epilepsy is NOT contagious."],
+      safetyAdvice: ["Avoid cooking over open fires alone."]
     },
     type: 'Emergency',
     authorName: 'Alex Mutua',
@@ -183,33 +116,20 @@ export const mockEncounters: Encounter[] = [
 
 export const mockClinicians = [
   { id: 'c1', name: 'Dr. Sarah Mwangi', role: 'Senior Neurologist', hospital: 'National Referral', email: 's.mwangi@health.go.ke', phone: '+254 700 111 222', license: 'KMPDC-9982', status: 'Approved' },
-  { id: 'c2', name: 'Dr. Robert Chen', role: 'General Practitioner', hospital: 'District General', email: 'r.chen@health.go.ke', phone: '+254 700 333 444', license: 'KMPDC-4421', status: 'Approved' },
-  { id: 'c3', name: 'Dr. Emily Wanjiku', role: 'Medical Officer', hospital: 'Regional Hospital', email: 'e.wanjiku@health.go.ke', phone: '+254 700 555 666', license: 'KMPDC-7712', status: 'Pending' },
 ];
 
 export const mockCHWs = [
   { id: 'chw1', name: 'Alex Mutua', sector: 'Kijiji Village', activePatients: 28, email: 'a.mutua@chw.org', phone: '+254 711 555 666', performance: 'Excellent', status: 'Approved' },
-  { id: 'chw2', name: 'Grace Achieng', sector: 'Mlimani Sector', activePatients: 15, email: 'g.achieng@chw.org', phone: '+254 711 777 888', performance: 'Good', status: 'Approved' },
-  { id: 'chw3', name: 'James Otieno', sector: 'Ziwani Block', activePatients: 0, email: 'j.otieno@chw.org', phone: '+254 711 999 000', performance: 'New', status: 'Pending' },
 ];
 
 export const mockHealthFacilities: HealthFacility[] = [
   {
     id: 'f1',
-    name: 'Kenyatta University Teaching, Referral and Research Hospital (KUTRRH)',
+    name: 'Kenyatta University Teaching Hospital (KUTRRH)',
     type: 'specialist',
     coordinates: { lat: -1.1747, lng: 36.9264 },
-    capabilities: ['Tertiary Epilepsy Care', 'Neurology Specialist', 'EEG/Video-EEG', '24/7 Emergency'],
+    capabilities: ['Tertiary Epilepsy Care', 'Neurology Specialist'],
     contact: '+254 800 721 038',
-    isOpen24h: true
-  },
-  {
-    id: 'f2',
-    name: 'District General Hospital',
-    type: 'district',
-    coordinates: { lat: -1.3000, lng: 36.8500 },
-    capabilities: ['General Ward', 'CT Scan', 'Pharmacy', 'Emergency'],
-    contact: '+254 20 1234567',
     isOpen24h: true
   }
 ];

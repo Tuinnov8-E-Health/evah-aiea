@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from "react";
@@ -28,7 +29,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { mockPatients, mockUserProfile, mockCHWs, mockClinicians, mockHealthFacilities } from "@/lib/mock-data";
-import { differenceInDays, parseISO, isValid } from "date-fns";
+import { differenceInDays, parseISO, isValid, differenceInYears } from "date-fns";
 
 export default function Dashboard() {
   const [role, setRole] = useState<string>('chw');
@@ -62,6 +63,16 @@ export default function Dashboard() {
     if (!isValid(nextDate)) return null;
     const diff = differenceInDays(nextDate, new Date());
     return Math.max(0, diff);
+  };
+
+  const getAge = (birthDateStr: string) => {
+    try {
+      const birthDate = parseISO(birthDateStr);
+      if (!isValid(birthDate)) return '??';
+      return differenceInYears(new Date(), birthDate);
+    } catch {
+      return '??';
+    }
   };
 
   return (
@@ -190,11 +201,11 @@ export default function Dashboard() {
                       </Link>
                       <div className="flex flex-col gap-1 mt-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{patient.age}Y • {patient.gender}</span>
+                          <span className="text-xs text-muted-foreground">{getAge(patient.birthDate)}Y • {patient.gender}</span>
                           <Badge 
                             variant="secondary" 
                             className={cn(
-                              "text-[10px] h-5 px-2",
+                              "text-[10px] h-5 px-2 uppercase",
                               patient.status === 'Urgent' && "bg-red-100 text-red-700",
                               patient.status === 'Stable' && "bg-green-100 text-green-700",
                               patient.status === 'Follow-up' && "bg-blue-100 text-blue-700",
@@ -203,15 +214,17 @@ export default function Dashboard() {
                             {patient.status}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className={cn(
-                            "text-[9px] h-5 px-2 gap-1 font-bold",
-                            followUpDays === 0 ? "border-red-200 text-red-600 bg-red-50" : "text-muted-foreground"
-                          )}>
-                            <CalendarClock className="h-3 w-3" />
-                            {followUpDays === 0 ? "Follow-up Due" : `Follow-up in ${followUpDays} Days`}
-                          </Badge>
-                        </div>
+                        {followUpDays !== null && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className={cn(
+                              "text-[9px] h-5 px-2 gap-1 font-bold",
+                              followUpDays === 0 ? "border-red-200 text-red-600 bg-red-50" : "text-muted-foreground"
+                            )}>
+                              <CalendarClock className="h-3 w-3" />
+                              {followUpDays === 0 ? "Follow-up Due" : `Follow-up in ${followUpDays} Days`}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                     </div>
                     

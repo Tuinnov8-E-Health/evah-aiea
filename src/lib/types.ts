@@ -1,33 +1,50 @@
+
 import type { LucideIcon } from "lucide-react";
 
 export type Role = 'chw' | 'clinician' | 'supervisor';
 
+/**
+ * FHIR-Aligned Patient Type
+ */
 export type Patient = {
   id: string;
-  name: string;
-  age: number;
-  gender: string;
-  location: string;
-  contact: string;
+  active: boolean;
+  name: string; // HumanName.text
+  gender: 'male' | 'female' | 'other' | 'unknown';
+  birthDate: string; // YYYY-MM-DD
   status: 'Stable' | 'Urgent' | 'Follow-up';
+  telecom: {
+    system: string;
+    value: string;
+  };
+  address: {
+    text: string;
+    city?: string;
+    district?: string;
+  };
   updatedAt?: string;
   nextFollowUpDate?: string;
   chwId?: string;
   chwName?: string;
 };
 
+/**
+ * FHIR-Aligned Encounter Type
+ */
 export type Encounter = {
   id: string;
-  patientId: string;
-  date: string; // ISO format
+  status: 'planned' | 'arrived' | 'triaged' | 'in-progress' | 'finished' | 'cancelled';
+  subject: string; // Patient ID
+  date: string; // period.start equivalent
   summary: string;
-  redFlags: string[];
+  redFlags: string[]; // maps to reasonCode
   recommendation: {
     action: string;
-    urgencyLevel?: string;
+    urgencyLevel: string;
     referralDestination?: string;
     antiStigmaMessages?: string[];
     safetyAdvice?: string[];
+    followUpPlan?: string;
   };
   type: 'Initial' | 'Routine' | 'Emergency';
   discordanceNote?: string;

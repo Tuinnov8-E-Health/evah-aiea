@@ -5,51 +5,77 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Patient",
       "type": "object",
-      "description": "A patient registered for epilepsy management and monitoring.",
+      "description": "A patient record aligned with FHIR Patient resource standards.",
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string" },
-        "age": { "type": "number" },
-        "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
-        "location": { "type": "string" },
-        "contact": { "type": "string" },
+        "active": { "type": "boolean", "default": true },
+        "name": { "type": "string", "description": "Mapping to FHIR HumanName.text" },
+        "gender": { "type": "string", "enum": ["male", "female", "other", "unknown"] },
+        "birthDate": { "type": "string", "format": "date" },
+        "telecom": { 
+          "type": "object",
+          "properties": {
+            "system": { "type": "string", "default": "phone" },
+            "value": { "type": "string" }
+          }
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "city": { "type": "string" },
+            "district": { "type": "string" }
+          }
+        },
         "status": { "type": "string", "enum": ["Stable", "Urgent", "Follow-up"] },
         "registrationDate": { "type": "string", "format": "date-time" },
         "chwId": { "type": "string" }
       },
-      "required": ["id", "name", "age", "gender", "location", "status"]
+      "required": ["id", "name", "gender", "birthDate", "status"]
     },
-    "ClinicalEncounter": {
+    "Encounter": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ClinicalEncounter",
+      "title": "Encounter",
       "type": "object",
-      "description": "A recorded assessment session guided by the AI Clinical Engine.",
+      "description": "A clinical assessment record aligned with FHIR Encounter resource standards.",
       "properties": {
         "id": { "type": "string" },
-        "patientId": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["planned", "arrived", "triaged", "in-progress", "finished", "cancelled"] },
+        "subject": { "type": "string", "description": "Reference to Patient ID" },
+        "period": {
+          "type": "object",
+          "properties": {
+            "start": { "type": "string", "format": "date-time" },
+            "end": { "type": "string", "format": "date-time" }
+          }
+        },
+        "reasonCode": { "type": "array", "items": { "type": "string" }, "description": "Mapping to clinical red flags or seizure types" },
         "summary": { "type": "string" },
-        "redFlags": { "type": "array", "items": { "type": "string" } },
         "urgencyLevel": { "type": "string", "enum": ["EMERGENCY", "URGENT", "ROUTINE", "STABLE"] },
-        "actionTaken": { "type": "string" },
-        "authorId": { "type": "string" },
-        "authorRole": { "type": "string" }
+        "author": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "role": { "type": "string" }
+          }
+        },
+        "discordanceNote": { "type": "string" }
       },
-      "required": ["id", "patientId", "date", "urgencyLevel"]
+      "required": ["id", "status", "subject", "urgencyLevel"]
     },
     "HealthFacility": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "HealthFacility",
       "type": "object",
-      "description": "A medical facility that accepts referrals for epilepsy patients.",
+      "description": "Registered health facility aligned with FHIR Organization resource standards.",
       "properties": {
         "id": { "type": "string" },
+        "active": { "type": "boolean", "default": true },
         "name": { "type": "string" },
         "type": { "type": "string", "enum": ["specialist", "district", "local"] },
+        "telecom": { "type": "string" },
         "address": { "type": "string" },
-        "contactEmail": { "type": "string", "format": "email" },
-        "contactPhone": { "type": "string" },
-        "location": { "type": "string" },
         "coordinates": {
           "type": "object",
           "properties": {
@@ -58,7 +84,7 @@
           }
         }
       },
-      "required": ["id", "name", "type", "address"]
+      "required": ["id", "name", "type"]
     }
   },
   "auth": {
@@ -71,23 +97,15 @@
         "definition": {
           "entityName": "Patient",
           "schema": { "$ref": "#/backend/entities/Patient" },
-          "description": "Root collection for patient profiles."
+          "description": "FHIR-Aligned Patient collection."
         }
       },
       {
         "path": "/patients/{patientId}/encounters/{encounterId}",
         "definition": {
-          "entityName": "ClinicalEncounter",
-          "schema": { "$ref": "#/backend/entities/ClinicalEncounter" },
-          "description": "Sub-collection of encounter logs per patient."
-        }
-      },
-      {
-        "path": "/facilities/{facilityId}",
-        "definition": {
-          "entityName": "HealthFacility",
-          "schema": { "$ref": "#/backend/entities/HealthFacility" },
-          "description": "Registered health facilities for referrals."
+          "entityName": "Encounter",
+          "schema": { "$ref": "#/backend/entities/Encounter" },
+          "description": "FHIR-Aligned Encounter sub-collection."
         }
       }
     ]
