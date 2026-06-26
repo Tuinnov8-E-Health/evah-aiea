@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Mic, 
-  Send, 
-  Paperclip, 
-  X, 
+import {
+  Mic,
+  Send,
+  Paperclip,
+  X,
   Sparkles,
   CheckCircle2,
   Edit3,
@@ -27,21 +27,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { runClinicalLogic } from "@/lib/clinical-engine/engine";
 import { Recommendation, ClinicalInput } from "@/lib/clinical-engine/types";
 import { generalAiQuery } from "@/ai/flows/general-ai-query";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { mockPatients, mockUserProfile } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
@@ -112,7 +112,7 @@ function AssessContent() {
   const handleSelectPatient = (id: string) => {
     setSelectedPatientId(id);
     setShowPatientPicker(false);
-    
+
     const patientName = patients?.find(p => p.id === id)?.name || "the patient";
     setMessages(prev => [
       ...prev,
@@ -142,7 +142,7 @@ function AssessContent() {
     setMessages(prev => [...prev, userMsg]);
     const currentInput = inputText;
     setInputText("");
-    
+
     await processInquiry(currentInput);
   };
 
@@ -172,7 +172,7 @@ function AssessContent() {
       } else {
         const context = selectedPatient ? `Patient: ${selectedPatient.name}, Age: ${selectedPatient.age}, Status: ${selectedPatient.status}` : 'No patient selected.';
         const response = await generalAiQuery({ query: input, context });
-        
+
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'ai',
@@ -191,7 +191,7 @@ function AssessContent() {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const isEmergency = input.toLowerCase().includes("repeated") || input.toLowerCase().includes("status") || input.toLowerCase().includes("prolonged") || input.toLowerCase().includes("7");
-    
+
     const clinicalInput: ClinicalInput = {
       patientProfile: { age: selectedPatient?.age || 30, sex: (selectedPatient?.gender || 'other').toLowerCase() },
       seizureHistory: { type: 'convulsive', semiology: ['Motor Jerking'], duration: isEmergency ? '7' : '2', frequency: '3/month', triggers: [], comorbidities: [] },
@@ -201,7 +201,7 @@ function AssessContent() {
 
     const result = runClinicalLogic(clinicalInput);
     setActiveRecommendation(result);
-    
+
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'ai',
@@ -377,9 +377,12 @@ function AssessContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-4">
-          <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
-          <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return to Dashboard</Button>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">The AI report is ready. Submit the encounter above and use the button below to print the final PDF.</p>
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Print PDF</Button>
+            <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return to Dashboard</Button>
+          </div>
         </div>
       </div>
     );
@@ -445,8 +448,8 @@ function AssessContent() {
               </div>
               <div className={cn(
                 "p-4 rounded-2xl text-sm leading-relaxed shadow-sm",
-                msg.role === 'user' 
-                  ? "bg-primary text-primary-foreground rounded-tr-none" 
+                msg.role === 'user'
+                  ? "bg-primary text-primary-foreground rounded-tr-none"
                   : "bg-muted/50 border rounded-tl-none text-foreground"
               )}>
                 {msg.content}
@@ -465,7 +468,7 @@ function AssessContent() {
                         </Badge>
                         <Sparkles className="h-4 w-4 text-primary opacity-50" />
                       </div>
-                      
+
                       <div className="space-y-4">
                         <section>
                           <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Suggestive Action ({msg.recommendation.action})</h4>
@@ -481,7 +484,7 @@ function AssessContent() {
 
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-primary/10">
                         <Button onClick={() => handleAction('approve')} className="h-10 text-xs font-bold gap-2 bg-green-600 hover:bg-green-700 text-white">
-                          <CheckCircle2 className="h-4 w-4" /> Approve
+                          <CheckCircle2 className="h-4 w-4" /> Submit
                         </Button>
                         <Button onClick={() => handleAction('override')} variant="outline" className="h-10 text-xs font-bold gap-2">
                           <Edit3 className="h-4 w-4" /> Override
@@ -508,12 +511,12 @@ function AssessContent() {
           <div className="relative flex items-end gap-2 bg-card border rounded-2xl p-2 shadow-lg">
             <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground rounded-xl" onClick={() => toast({ title: "Clinical Attachment", description: "Minimal PII scanning is active." })}><Paperclip className="h-5 w-5" /></Button>
             <div className="flex-1">
-              <Textarea 
+              <Textarea
                 placeholder={selectedPatient ? `Describe symptoms for ${selectedPatient.name}...` : "Ask a general epilepsy question or type @patient..."}
-                value={inputText} 
-                onChange={(e) => setInputText(e.target.value)} 
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
                 className="min-h-[44px] max-h-[150px] resize-none border-none focus-visible:ring-0 py-3 bg-transparent text-sm"
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendText(); } }} 
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendText(); } }}
               />
             </div>
             <div className="flex items-center gap-1 pb-1 pr-1">
@@ -544,7 +547,7 @@ function AssessContent() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest">Discordance Reason</Label>
-              <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
+              <Select onValueChange={v => setOverrideData({ ...overrideData, reason: v })}>
                 <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="context">AI missed clinical context</SelectItem>
@@ -555,7 +558,7 @@ function AssessContent() {
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest">Justification Notes</Label>
-              <Textarea value={overrideData.notes} onChange={e => setOverrideData({...overrideData, notes: e.target.value})} placeholder="Describe clinical reasoning..." className="rounded-xl min-h-[100px]" />
+              <Textarea value={overrideData.notes} onChange={e => setOverrideData({ ...overrideData, notes: e.target.value })} placeholder="Describe clinical reasoning..." className="rounded-xl min-h-[100px]" />
             </div>
           </div>
           <DialogFooter><Button variant="destructive" className="w-full h-14 font-bold rounded-2xl shadow-lg" disabled={!overrideData.reason || !overrideData.notes} onClick={handleOverrideComplete}>Confirm Specialist Update</Button></DialogFooter>
@@ -576,10 +579,10 @@ function AssessContent() {
   );
 }
 
-export default function AssessPage() { 
+export default function AssessPage() {
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>}>
       <AssessContent />
     </Suspense>
-  ); 
+  );
 }

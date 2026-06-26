@@ -22,12 +22,17 @@ export default function AccountPage() {
   const router = useRouter();
   const [role, setRole] = useState<string>('chw');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     // Read the active demo role from the session
     const savedRole = localStorage.getItem('demo_role');
     if (savedRole) setRole(savedRole);
+
+    const savedSyncAt = localStorage.getItem('last_sync_at');
+    if (savedSyncAt) setLastSyncAt(savedSyncAt);
   }, []);
 
   useEffect(() => {
@@ -44,6 +49,16 @@ export default function AccountPage() {
   const handleThemeToggle = (checked: boolean) => {
     setIsDarkMode(checked);
     setTheme(checked ? "dark" : "light");
+  };
+
+  const handleSync = () => {
+    setIsSyncing(true);
+    const now = new Date().toISOString();
+    setTimeout(() => {
+      localStorage.setItem('last_sync_at', now);
+      setLastSyncAt(now);
+      setIsSyncing(false);
+    }, 400);
   };
 
   const menuItems = [
@@ -127,6 +142,45 @@ export default function AccountPage() {
         {menuItems.map((item, index) => {
           const IconComponent = item.icon;
 
+          if (item.label === 'Logout') {
+            return (
+              <div key={index}>
+                <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-900">Sync</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Automatically syncs when the app reconnects to the internet.</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-white p-4 border border-slate-200">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Last sync</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {lastSyncAt ? new Date(lastSyncAt).toLocaleString() : 'Never synced yet'}
+                    </p>
+                  </div>
+
+                  <Button onClick={handleSync} disabled={isSyncing} className="w-full">
+                    {isSyncing ? 'Syncing...' : 'Sync Now'}
+                  </Button>
+                </div>
+
+                <div
+                  onClick={item.onClick}
+                  className="flex items-center gap-4 py-4 px-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 active:bg-gray-100 mt-4"
+                >
+                  <div className="bg-primary/10 rounded-full p-3 flex-shrink-0">
+                    <IconComponent className="h-5 w-5 text-primary" />
+                  </div>
+
+                  <span className="flex-1 font-medium text-gray-900">
+                    {item.label}
+                  </span>
+
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+            );
+          }
+
           if (item.hasToggle) {
             return (
               <div
@@ -199,7 +253,7 @@ export default function AccountPage() {
       {/* Footer */}
       <div className="mt-8 text-center pb-8">
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-          Prototype Version 1.0.5-mock
+          Version 1.0.5
         </p>
         <p className="text-[10px] text-muted-foreground mt-1">
           © 2026 AI Epilepsy Assistant
