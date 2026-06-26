@@ -45,17 +45,37 @@ export default function LoginPage() {
   const handleDemoLogin = async (role: string) => {
     setLoading(true);
 
-    const credentials: Record<string, { email: string; password: string }> = {
-      chw: { email: 'chw@demo.ai', password: 'demo123' },
-      clinician: { email: 'clinician@demo.ai', password: 'demo123' },
-      supervisor: { email: 'supervisor@demo.ai', password: 'demo123' },
+    const demoUsers: Record<string, { id: string; name: string; email: string; role: string; imageUrl: string; location: string }> = {
+      chw: {
+        id: 'user-chw',
+        name: 'Demo Health Worker',
+        email: 'chw@demo.ai',
+        role: 'chw',
+        imageUrl: 'https://picsum.photos/seed/chw/200/200',
+        location: 'Community Clinic',
+      },
+      clinician: {
+        id: 'user-clinician',
+        name: 'Dr. Sarah Mwangi',
+        email: 'clinician@demo.ai',
+        role: 'clinician',
+        imageUrl: 'https://picsum.photos/seed/clinician/200/200',
+        location: 'Regional Referral',
+      },
+      supervisor: {
+        id: 'user-supervisor',
+        name: 'System Supervisor',
+        email: 'supervisor@demo.ai',
+        role: 'supervisor',
+        imageUrl: 'https://picsum.photos/seed/supervisor/200/200',
+        location: 'Ministry of Health',
+      },
     };
 
     try {
-      const demo = credentials[role];
-      if (!demo) throw new Error('Invalid demo role');
-      const response = await login(demo.email, demo.password);
-      saveSession(response.token, response.user);
+      const demoUser = demoUsers[role];
+      if (!demoUser) throw new Error('Invalid demo role');
+      saveSession(`demo-token-${demoUser.role}`, demoUser);
       localStorage.setItem('is_demo', 'true');
       toast({ title: 'Demo Login', description: `Logged in as ${role.toUpperCase()}` });
       window.location.href = '/dashboard';

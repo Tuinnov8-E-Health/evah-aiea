@@ -31,8 +31,17 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const sessionUser = getStoredUser();
+    const demoMode = typeof window !== 'undefined' && localStorage.getItem('is_demo') === 'true';
+
     if (!sessionUser) {
       router.push('/login');
+      return;
+    }
+
+    if (demoMode) {
+      setRole(sessionUser.role);
+      setUserName(sessionUser.name);
+      setLoading(false);
       return;
     }
 

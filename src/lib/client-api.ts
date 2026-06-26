@@ -38,6 +38,7 @@ export function clearSession() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('is_demo');
 }
 
 async function apiFetch<T>(input: RequestInfo, init: RequestInit = {}): Promise<T> {
