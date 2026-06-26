@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Brain, List, User, Bell, Activity, ClipboardList } from "lucide-react";
+import { Home, Brain, List, User, Activity, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
@@ -14,15 +14,14 @@ export function MobileNav({ userRole }: MobileNavProps) {
 
   const baseItems = [
     { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
-    { 
-      href: "/dashboard/assess", 
-      icon: userRole === 'clinician' ? ClipboardList : Brain, 
-      label: userRole === 'clinician' ? "Review" : "AI", 
-      roles: ['chw', 'clinician'] 
+    {
+      href: "/dashboard/assess",
+      icon: userRole === 'clinician' ? ClipboardList : Brain,
+      label: userRole === 'clinician' ? "Review" : "AI",
+      roles: ['chw', 'clinician']
     },
     { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
     { href: "/dashboard/records", icon: List, label: userRole === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/notifications", icon: Bell, label: "Alerts", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/account", icon: User, label: "Account", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 

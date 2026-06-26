@@ -75,7 +75,7 @@ export default function DashboardLayout({
               </span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Link href="/dashboard/notifications" className="relative p-2 hover:bg-muted rounded-full transition-colors">
               <Bell className="h-5 w-5 text-primary" />
@@ -101,9 +101,6 @@ export default function DashboardLayout({
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/account">My Account</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/profile">Profile Settings</Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -113,8 +110,8 @@ export default function DashboardLayout({
             </DropdownMenu>
           </div>
         </header>
-        
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+
+        <main className="flex-1 p-4 pb-24 md:p-6 lg:p-8">
           <div className="mx-auto max-w-5xl">
             <Suspense fallback={<PageLoader />}>
               {children}

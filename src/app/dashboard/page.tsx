@@ -4,12 +4,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { 
-  Users, 
-  AlertTriangle, 
-  MoreVertical, 
-  UserPlus, 
-  History, 
+import {
+  Users,
+  AlertTriangle,
+  MoreVertical,
+  UserPlus,
+  History,
   UserCheck,
   Stethoscope,
   Building2,
@@ -18,17 +18,18 @@ import {
   ClipboardPlus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fetchPatients, fetchRegistry, getStoredUser } from '@/lib/client-api';
+import { mockPatients } from '@/lib/mock-data';
 import { differenceInDays, parseISO, isValid, differenceInYears } from "date-fns";
 
 export default function Dashboard() {
@@ -36,6 +37,7 @@ export default function Dashboard() {
   const [userName, setUserName] = useState<string>('Care Team');
   const [patients, setPatients] = useState<any[]>([]);
   const [registry, setRegistry] = useState<{ clinicians: any[]; chws: any[]; facilities: any[] } | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     const sessionUser = getStoredUser();
@@ -44,9 +46,16 @@ export default function Dashboard() {
       setUserName(sessionUser.name.split(' ')[0] || sessionUser.name);
     }
 
-    fetchPatients()
-      .then((result) => setPatients(result.patients))
-      .catch(() => setPatients([]));
+    const demoMode = localStorage.getItem('is_demo') === 'true';
+    setIsDemo(demoMode);
+
+    if (demoMode) {
+      setPatients(mockPatients);
+    } else {
+      fetchPatients()
+        .then((result) => setPatients(result.patients))
+        .catch(() => setPatients([]));
+    }
 
     fetchRegistry()
       .then((result) => setRegistry(result.registry))
@@ -56,7 +65,7 @@ export default function Dashboard() {
   const isSupervisor = role === 'supervisor';
   const isClinician = role === 'clinician';
   const isCHW = role === 'chw';
-  
+
   const urgentCount = patients.filter(p => p.status === 'Urgent').length;
   const myPatientsCount = patients.length;
   const clinicianCount = registry?.clinicians.length ?? 0;
@@ -102,7 +111,7 @@ export default function Dashboard() {
           <CardContent className="p-4 pt-2">
             <div className="text-3xl font-bold text-primary">{myPatientsCount}</div>
             <p className="text-[10px] uppercase font-bold text-muted-foreground">
-              {isCHW ? "My Registered Patients" : "Regional Patient Registry"}
+              My Patients
             </p>
           </CardContent>
         </Card>
@@ -194,7 +203,7 @@ export default function Dashboard() {
 
         <div className="space-y-3 pb-10">
           {patients.length > 0 ? (
-            patients.map((patient) => {
+            patients.slice(0, 4).map((patient) => {
               const followUpDays = getFollowUpDays(patient);
               return (
                 <Card key={patient.id} className="border-none shadow-sm bg-card/50">
@@ -209,8 +218,8 @@ export default function Dashboard() {
                       <div className="flex flex-col gap-1 mt-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{getAge(patient.birthDate)}Y • {patient.gender}</span>
-                          <Badge 
-                            variant="secondary" 
+                          <Badge
+                            variant="secondary"
                             className={cn(
                               "text-[10px] h-5 px-2 uppercase",
                               patient.status === 'Urgent' && "bg-red-100 text-red-700",
@@ -234,7 +243,7 @@ export default function Dashboard() {
                         )}
                       </div>
                     </div>
-                    
+
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -258,11 +267,6 @@ export default function Dashboard() {
                             </DropdownMenuItem>
                           </>
                         )}
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/records/${patient.id}/history`}>
-                            <History className="mr-2 h-4 w-4" /> Full History
-                          </Link>
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </CardContent>

@@ -41,7 +41,7 @@ export default function AccountPage() {
     router.push('/login');
   };
 
-  const handleDarkModeToggle = (checked: boolean) => {
+  const handleThemeToggle = (checked: boolean) => {
     setIsDarkMode(checked);
     setTheme(checked ? "dark" : "light");
   };
@@ -54,8 +54,8 @@ export default function AccountPage() {
     },
     {
       icon: Bell,
-      label: "Notifications",
-      href: "/dashboard/notifications",
+      label: "Notification Settings",
+      href: "/dashboard/notifications?tab=settings",
     },
     {
       icon: Lock,
@@ -64,10 +64,10 @@ export default function AccountPage() {
     },
     {
       icon: Eye,
-      label: "Dark Mode",
+      label: "Theme",
       hasToggle: true,
       value: isDarkMode,
-      onChange: handleDarkModeToggle,
+      onChange: handleThemeToggle,
     },
     {
       icon: Globe,
@@ -126,7 +126,7 @@ export default function AccountPage() {
       <div className="px-4 py-2">
         {menuItems.map((item, index) => {
           const IconComponent = item.icon;
-          
+
           if (item.hasToggle) {
             return (
               <div

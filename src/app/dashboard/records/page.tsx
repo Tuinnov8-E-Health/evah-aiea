@@ -2,19 +2,16 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  MoreVertical, 
-  History, 
-  UserPlus, 
-  UserCircle, 
-  Building2, 
+import {
+  Search,
+  MoreVertical,
+  History,
+  UserPlus,
+  UserCircle,
+  Building2,
   PlusCircle,
   MapPin,
-  Phone,
-  Mail,
   ChevronRight,
-  Info,
   CalendarClock,
   Sparkles,
   Brain
@@ -22,27 +19,27 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { mockPatients, mockClinicians, mockCHWs, mockHealthFacilities } from "@/lib/mock-data";
+import { mockPatients, mockClinicians, mockHealthFacilities } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { differenceInDays, parseISO, isValid } from "date-fns";
 
@@ -51,24 +48,19 @@ export default function RecordsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [role, setRole] = useState<string>('chw');
   const [activeTab, setActiveTab] = useState("patients");
-  const [isDemo, setIsDemo] = useState(false);
   const [showAddHospital, setShowAddHospital] = useState(false);
-  const [selectedCHW, setSelectedCHW] = useState<any>(null);
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role');
-    const demoFlag = localStorage.getItem('is_demo') === 'true';
     if (savedRole) setRole(savedRole);
-    setIsDemo(demoFlag);
   }, []);
 
   const isSupervisor = role === 'supervisor';
   const isClinician = role === 'clinician';
 
-  const patients = isDemo ? mockPatients : [];
-  const clinicians = isDemo ? mockClinicians : [];
-  const chws = isDemo ? mockCHWs : [];
-  const facilities = isDemo ? mockHealthFacilities : [];
+  const patients = mockPatients;
+  const clinicians = mockClinicians;
+  const facilities = mockHealthFacilities;
 
   const handleApprove = (name: string) => {
     toast({
@@ -86,36 +78,30 @@ export default function RecordsPage() {
     });
   };
 
-  const filteredPatients = patients.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPatients = patients
+    .filter((p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  const filteredClinicians = clinicians.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredClinicians = clinicians.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredCHWs = chws.filter(w => 
-    w.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    w.sector.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredFacilities = facilities.filter(f =>
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const tabConfig = isSupervisor 
-    ? { count: 4, tabs: ['patients', 'clinicians', 'chws', 'facilities'] }
-    : isClinician 
-      ? { count: 2, tabs: ['patients', 'chws'] }
-      : { count: 1, tabs: ['patients'] };
+  const tabConfig = isSupervisor
+    ? { count: 3, tabs: ['patients', 'clinicians', 'facilities'] }
+    : { count: 1, tabs: ['patients'] };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-headline font-bold text-primary tracking-tight italic">
-          {isSupervisor ? "Regional Management" : "Regional Registry"}
+          {isSupervisor ? "Regional Management" : "My Patients"}
         </h1>
         {isSupervisor && activeTab === 'facilities' && (
           <Button size="sm" className="gap-2" onClick={() => setShowAddHospital(true)}>
@@ -126,9 +112,9 @@ export default function RecordsPage() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder={`Search ${activeTab}...`} 
-          className="pl-10 h-12 bg-muted/30 border-none focus-visible:ring-primary rounded-xl" 
+        <Input
+          placeholder={`Search ${activeTab}...`}
+          className="pl-10 h-12 bg-muted/30 border-none focus-visible:ring-primary rounded-xl"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -142,14 +128,23 @@ export default function RecordsPage() {
           )}>
             <TabsTrigger value="patients" className="rounded-lg text-[10px] sm:text-xs">Patients</TabsTrigger>
             {isSupervisor && <TabsTrigger value="clinicians" className="rounded-lg text-[10px] sm:text-xs">Clinicians</TabsTrigger>}
-            <TabsTrigger value="chws" className="rounded-lg text-[10px] sm:text-xs">CHWs</TabsTrigger>
             {isSupervisor && <TabsTrigger value="facilities" className="rounded-lg text-[10px] sm:text-xs">Facilities</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="patients" className="space-y-3 mt-4">
-            {filteredPatients.map(patient => (
-              <PatientCard key={patient.id} patient={patient} isRestricted={isSupervisor} />
-            ))}
+            {patients.length === 0 ? (
+              <div className="py-10 text-center border-2 border-dashed rounded-xl bg-muted/10">
+                <p className="text-sm text-foreground font-medium">You have not registered any patient yet.</p>
+              </div>
+            ) : filteredPatients.length === 0 ? (
+              <div className="py-10 text-center border-2 border-dashed rounded-xl bg-muted/10">
+                <p className="text-sm text-foreground font-medium">No matching patients found.</p>
+              </div>
+            ) : (
+              filteredPatients.map(patient => (
+                <PatientCard key={patient.id} patient={patient} isRestricted={isSupervisor} />
+              ))
+            )}
           </TabsContent>
 
           {isSupervisor && (
@@ -179,35 +174,6 @@ export default function RecordsPage() {
               ))}
             </TabsContent>
           )}
-
-          <TabsContent value="chws" className="space-y-3 mt-4">
-            {filteredCHWs.map(chw => (
-              <Card key={chw.id} className="border-none shadow-sm bg-card/50 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setSelectedCHW(chw)}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                    <UserCircle className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground truncate">{chw.name}</h3>
-                      <Badge variant={chw.status === 'Approved' ? 'secondary' : 'outline'} className="text-[8px] h-4">
-                        {chw.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sector: {chw.sector} • {chw.activePatients} Patients</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isSupervisor && chw.status === 'Pending' && (
-                      <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApprove(chw.name); }} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
-                        Approve
-                      </Button>
-                    )}
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
 
           {isSupervisor && (
             <TabsContent value="facilities" className="space-y-3 mt-4">
@@ -246,80 +212,6 @@ export default function RecordsPage() {
           ))}
         </div>
       )}
-
-      {/* CHW Profile Dialog */}
-      <Dialog open={!!selectedCHW} onOpenChange={(open) => !open && setSelectedCHW(null)}>
-        <DialogContent className="max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="font-headline italic text-primary flex items-center gap-2">
-              <UserCircle className="h-6 w-6" /> CHW Profile
-            </DialogTitle>
-            <DialogDescription>Detailed regional worker activity and contact profile.</DialogDescription>
-          </DialogHeader>
-          {selectedCHW && (
-            <div className="space-y-6 py-4">
-              <div className="flex flex-col items-center text-center gap-2">
-                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
-                  {selectedCHW.name.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-primary">{selectedCHW.name}</h3>
-                  <Badge variant="secondary" className="uppercase text-[9px] tracking-widest">{selectedCHW.status}</Badge>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div className="p-4 bg-muted/30 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground">Assigned Sector</span>
-                      <span className="text-sm font-medium">{selectedCHW.sector}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-primary" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground">Email Address</span>
-                      <span className="text-sm font-medium">{selectedCHW.email}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground">Contact Phone</span>
-                      <span className="text-sm font-medium">{selectedCHW.phone}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border-2 border-dashed rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-bold">Active Patient Registry</span>
-                  </div>
-                  <Badge className="bg-primary text-white h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold">
-                    {selectedCHW.activePatients}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                 <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-1">
-                   <Info className="h-3 w-3" /> Supervision Note
-                 </h4>
-                 <p className="text-xs text-slate-600 leading-relaxed bg-primary/5 p-3 rounded-xl">
-                   Worker is currently managing {selectedCHW.activePatients} families in the {selectedCHW.sector} region.
-                 </p>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" className="w-full h-12 rounded-xl" onClick={() => setSelectedCHW(null)}>Close Profile</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Onboarding Dialog */}
       <Dialog open={showAddHospital} onOpenChange={setShowAddHospital}>
         <DialogContent className="max-w-md">
@@ -369,8 +261,8 @@ export default function RecordsPage() {
             </DialogFooter>
           </form>
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 }
 
@@ -397,14 +289,14 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
             <h3 className="font-bold text-foreground truncate">{patient.name}</h3>
           </Link>
           <div className="flex flex-col gap-0.5 mt-0.5">
-            <p className="text-[10px] text-muted-foreground">{patient.location}</p>
+            <p className="text-[10px] text-foreground/70">{patient.location}</p>
             {patient.chwName && (
-              <p className="text-[10px] font-bold text-primary/60 uppercase">Responsible CHW: {patient.chwName}</p>
+              <p className="text-[10px] font-bold text-foreground/80 uppercase">Responsible CHW: {patient.chwName}</p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={cn(
                 "text-[9px] uppercase tracking-wider font-bold h-5 px-2",
                 patient.status === 'Urgent' && "border-red-200 bg-red-50 text-red-700",
@@ -423,7 +315,7 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
             </Badge>
           </div>
         </div>
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -447,11 +339,6 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuItem asChild>
-              <Link href={`/dashboard/records/${patient.id}/history`}>
-                <History className="mr-2 h-4 w-4" /> Full Clinical History
-              </Link>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardContent>

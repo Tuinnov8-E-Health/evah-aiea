@@ -31,15 +31,14 @@ export function SidebarNav() {
 
   const baseItems = [
     { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
-    { 
-      href: "/dashboard/assess", 
-      icon: role === 'clinician' ? ClipboardList : Brain, 
-      label: role === 'clinician' ? "Review" : "AI Assistant", 
-      roles: ['chw', 'clinician'] 
+    {
+      href: "/dashboard/assess",
+      icon: role === 'clinician' ? ClipboardList : Brain,
+      label: role === 'clinician' ? "Review" : "AI Assistant",
+      roles: ['chw', 'clinician']
     },
     { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Registry Management" : "Patient Registry", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/analytics", icon: DataIcon, label: "Safety Data", roles: ['supervisor'] },
-    { href: "/dashboard/history", icon: History, label: "Regional History", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/account", icon: User, label: "My Profile", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 
