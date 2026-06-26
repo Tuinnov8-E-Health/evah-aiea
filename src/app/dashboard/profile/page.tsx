@@ -1,112 +1,193 @@
+"use client";
+
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Edit,
+  Bell,
+  Lock,
+  Eye,
+  LogOut,
+  CheckCircle,
+  ChevronRight,
+  Globe,
+} from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { mockUserProfile } from "@/lib/mock-data";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function ProfilePage() {
-  return (
-    <div className="mx-auto grid w-full max-w-6xl gap-2">
-      <h1 className="text-3xl font-semibold font-headline">Account Settings</h1>
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
-      <Tabs defaultValue="profile">
-        <TabsList className="grid w-full grid-cols-2 max-w-sm">
-          <TabsTrigger value="profile">Edit Profile</TabsTrigger>
-          <TabsTrigger value="password">Change Password</TabsTrigger>
-        </TabsList>
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update your care provider details here.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <div className="relative h-20 w-20 rounded-full overflow-hidden">
-                        <Image src={mockUserProfile.imageUrl} alt="User Avatar" fill className="object-cover" data-ai-hint={mockUserProfile.imageHint}/>
-                    </div>
-                    <Button variant="outline">Change Photo</Button>
+  useEffect(() => {
+    // Set dark mode state based on current theme
+    setIsDarkMode(theme === 'dark');
+  }, [theme]);
+
+  const handleDarkModeToggle = (checked: boolean) => {
+    setIsDarkMode(checked);
+    setTheme(checked ? "dark" : "light");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('demo_session');
+    localStorage.removeItem('demo_role');
+    router.push('/login');
+  };
+
+  const menuItems = [
+    {
+      icon: Edit,
+      label: "Edit Profile",
+      href: "/dashboard/edit-profile",
+    },
+    {
+      icon: Bell,
+      label: "Notifications",
+      href: "/dashboard/notifications",
+    },
+    {
+      icon: Lock,
+      label: "Security",
+      href: "/dashboard/security",
+    },
+    {
+      icon: Eye,
+      label: "Dark Mode",
+      hasToggle: true,
+      value: isDarkMode,
+      onChange: handleDarkModeToggle,
+    },
+    {
+      icon: Globe,
+      label: "Language",
+      href: "/dashboard/language",
+    },
+    {
+      icon: LogOut,
+      label: "Logout",
+      onClick: handleLogout,
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-6 border-b">
+        <h1 className="text-2xl font-semibold">Profile</h1>
+        <Link href="/dashboard/edit-profile">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-primary hover:bg-primary/10"
+          >
+            <Edit className="h-5 w-5" />
+          </Button>
+        </Link>
+      </div>
+
+      <div className="flex flex-col items-center py-8 px-4">
+        {/* Profile Image with Verification Badge */}
+        <div className="relative mb-4">
+          <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-gray-200">
+            <Image
+              src={mockUserProfile.imageUrl}
+              alt="Profile"
+              fill
+              className="object-cover"
+              data-ai-hint={mockUserProfile.imageHint}
+            />
+          </div>
+          {/* Verification Badge */}
+          <div className="absolute bottom-2 right-2 bg-accent rounded-full p-1.5">
+            <CheckCircle className="h-5 w-5 text-white" />
+          </div>
+        </div>
+
+        {/* User Name */}
+        <h2 className="text-2xl font-semibold text-gray-900">
+          {mockUserProfile.surname || "User"}
+        </h2>
+      </div>
+
+      {/* Menu Items */}
+      <div className="px-4 py-2">
+        {menuItems.map((item, index) => {
+          const IconComponent = item.icon;
+          
+          if (item.hasToggle) {
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-4 py-4 px-3 rounded-lg"
+              >
+                {/* Icon */}
+                <div className="bg-primary/10 rounded-full p-3 flex-shrink-0">
+                  <IconComponent className="h-5 w-5 text-primary" />
                 </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="first-name">First Name</Label>
-                    <Input id="first-name" defaultValue={mockUserProfile.firstName} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="surname">Surname</Label>
-                    <Input id="surname" defaultValue={mockUserProfile.surname} />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue={mockUserProfile.email} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" defaultValue={mockUserProfile.phone} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    <Select defaultValue={mockUserProfile.gender?.toLowerCase() || 'other'}>
-                        <SelectTrigger id="gender">
-                            <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="address">Work Address</Label>
-                    <Input id="address" defaultValue={mockUserProfile.address?.line1} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="city">City/Town</Label>
-                    <Input id="city" defaultValue={mockUserProfile.address?.city} />
-                </div>
+
+                {/* Label */}
+                <span className="flex-1 font-medium text-gray-900">
+                  {item.label}
+                </span>
+
+                {/* Toggle */}
+                <Switch
+                  checked={item.value || false}
+                  onCheckedChange={item.onChange}
+                />
               </div>
-              <Button className="bg-primary text-white hover:bg-primary/90">Save Changes</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="password">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Change Password</CardTitle>
-                    <CardDescription>
-                    Choose a strong new password to protect your account.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 max-w-md">
-                    <div className="space-y-2">
-                        <Label htmlFor="current-password">Current Password</Label>
-                        <Input id="current-password" type="password" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="new-password">New Password</Label>
-                        <Input id="new-password" type="password" />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm New Password</Label>
-                        <Input id="confirm-password" type="password" />
-                    </div>
-                    <Button className="bg-primary text-white">Update Password</Button>
-                </CardContent>
-            </Card>
-        </TabsContent>
-      </Tabs>
+            );
+          }
+
+          if (item.href) {
+            return (
+              <Link key={index} href={item.href}>
+                <div className="flex items-center gap-4 py-4 px-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 active:bg-gray-100">
+                  {/* Icon */}
+                  <div className="bg-primary/10 rounded-full p-3 flex-shrink-0">
+                    <IconComponent className="h-5 w-5 text-primary" />
+                  </div>
+
+                  {/* Label */}
+                  <span className="flex-1 font-medium text-gray-900">
+                    {item.label}
+                  </span>
+
+                  {/* Arrow */}
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </Link>
+            );
+          }
+
+          return (
+            <div
+              key={index}
+              onClick={item.onClick}
+              className="flex items-center gap-4 py-4 px-3 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 active:bg-gray-100"
+            >
+              {/* Icon */}
+              <div className="bg-primary/10 rounded-full p-3 flex-shrink-0">
+                <IconComponent className="h-5 w-5 text-primary" />
+              </div>
+
+              {/* Label */}
+              <span className="flex-1 font-medium text-gray-900">
+                {item.label}
+              </span>
+
+              {/* Arrow */}
+              <ChevronRight className="h-5 w-5 text-gray-400" />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

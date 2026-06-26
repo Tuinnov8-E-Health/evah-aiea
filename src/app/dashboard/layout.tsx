@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { mockUserProfile } from "@/lib/mock-data";
+import { getMe, clearSession, getStoredUser } from '@/lib/client-api';
 
 export default function DashboardLayout({
   children,
@@ -27,17 +27,25 @@ export default function DashboardLayout({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('chw');
-  const [isDemo, setIsDemo] = useState(false);
+  const [userName, setUserName] = useState('Care Team');
 
   useEffect(() => {
-    const isSessionActive = localStorage.getItem('demo_session') === 'true';
-    if (!isSessionActive) {
+    const sessionUser = getStoredUser();
+    if (!sessionUser) {
       router.push('/login');
-    } else {
-      setRole(localStorage.getItem('demo_role') || 'chw');
-      setIsDemo(localStorage.getItem('is_demo') === 'true');
-      setLoading(false);
+      return;
     }
+
+    getMe()
+      .then((result) => {
+        setRole(result.user.role);
+        setUserName(result.user.name);
+        setLoading(false);
+      })
+      .catch(() => {
+        clearSession();
+        router.push('/login');
+      });
   }, [router]);
 
   if (loading) {
@@ -45,8 +53,7 @@ export default function DashboardLayout({
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('demo_session');
-    localStorage.removeItem('demo_role');
+    clearSession();
     router.push('/login');
   };
 
@@ -64,7 +71,7 @@ export default function DashboardLayout({
             <div className="flex flex-col">
               <span className="font-headline font-bold text-primary leading-tight text-sm">AIEA Assistant</span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                {role.toUpperCase()} {isDemo ? 'Demo' : ''}
+                {role.toUpperCase()}
               </span>
             </div>
           </div>
@@ -86,7 +93,7 @@ export default function DashboardLayout({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold">{mockUserProfile.name}</span>
+                    <span className="text-sm font-bold">{userName}</span>
                     <span className="text-[10px] text-muted-foreground uppercase">{role}</span>
                   </div>
                 </DropdownMenuLabel>

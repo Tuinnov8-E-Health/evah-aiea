@@ -34,7 +34,8 @@ export type Patient = {
 export type Encounter = {
   id: string;
   status: 'planned' | 'arrived' | 'triaged' | 'in-progress' | 'finished' | 'cancelled';
-  subject: string; // Patient ID
+  subject?: string; // Patient ID
+  patientId: string;
   date: string; // period.start equivalent
   summary: string;
   redFlags: string[]; // maps to reasonCode

@@ -4,6 +4,7 @@ import { Poppins, PT_Sans } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const fontPoppins = Poppins({
   subsets: ['latin'],
@@ -69,9 +70,11 @@ export default function RootLayout({
           fontPTSans.variable
         )}
       >
-        <div className="min-h-screen flex flex-col">
-          {children}
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <div className="min-h-screen flex flex-col">
+            {children}
+          </div>
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>

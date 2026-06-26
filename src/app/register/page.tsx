@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { register, saveSession } from '@/lib/client-api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -51,14 +52,23 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    // Pure Frontend Simulation
-    setTimeout(() => {
-      setLoading(false);
-      localStorage.setItem('demo_session', 'true');
-      localStorage.setItem('demo_role', formData.role);
-      toast({ title: 'Welcome!', description: 'Account created successfully (Local Session).' });
+
+    try {
+      const response = await register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
+      saveSession(response.token, response.user);
+      toast({ title: 'Welcome!', description: 'Account created successfully.' });
       router.push('/dashboard');
-    }, 1500);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Registration Failed', description: error?.message || 'Unable to create account.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

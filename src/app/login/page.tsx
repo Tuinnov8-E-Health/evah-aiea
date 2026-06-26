@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Key, UserCheck, Shield } from 'lucide-react';
+import { login, saveSession } from '@/lib/client-api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,26 +29,40 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Manual Login: Marks session as NOT demo
-    setTimeout(() => {
-      setLoading(false);
-      localStorage.setItem('demo_session', 'true');
-      localStorage.setItem('is_demo', 'false'); // Non-demo session
-      const role = email.includes('supervisor') ? 'supervisor' : email.includes('clinician') ? 'clinician' : 'chw';
-      localStorage.setItem('demo_role', role);
-      toast({ title: 'Login Success', description: `Logged in as ${role.toUpperCase()}` });
+
+    try {
+      const response = await login(email, password);
+      saveSession(response.token, response.user);
+      toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
       router.push('/dashboard');
-    }, 1000);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Login Failed', description: error?.message || 'Unable to authenticate.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDemoLogin = (role: string) => {
-    // Demo Login: Marks session as demo
-    localStorage.setItem('demo_session', 'true');
-    localStorage.setItem('is_demo', 'true'); // Demo session enabled
-    localStorage.setItem('demo_role', role);
-    toast({ title: 'Demo Mode Activated', description: `Accessing clinical prototype as ${role.toUpperCase()}` });
-    router.push('/dashboard');
+  const handleDemoLogin = async (role: string) => {
+    setLoading(true);
+
+    const credentials: Record<string, { email: string; password: string }> = {
+      chw: { email: 'chw@demo.ai', password: 'demo123' },
+      clinician: { email: 'clinician@demo.ai', password: 'demo123' },
+      supervisor: { email: 'supervisor@demo.ai', password: 'demo123' },
+    };
+
+    try {
+      const demo = credentials[role];
+      if (!demo) throw new Error('Invalid demo role');
+      const response = await login(demo.email, demo.password);
+      saveSession(response.token, response.user);
+      toast({ title: 'Demo Login', description: `Logged in as ${role.toUpperCase()}` });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Demo Login Failed', description: error?.message || 'Unable to authenticate demo user.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,8 +73,8 @@ export default function LoginPage() {
         </div>
         <Card className="border-none shadow-none bg-transparent">
           <CardHeader className="px-0 text-center">
-            <CardTitle className="text-3xl font-headline font-bold text-primary">Welcome Back</CardTitle>
-            <CardDescription className="text-lg">Secure Access for Care Teams</CardDescription>
+            <CardTitle className="text-3xl font-headline font-bold text-primary">Secure Login</CardTitle>
+            <CardDescription className="text-lg">Sign in with a registered account to access the dashboard.</CardDescription>
           </CardHeader>
           <CardContent className="px-0 space-y-4 mt-4">
             <form onSubmit={handleLogin} className="space-y-4">

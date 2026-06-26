@@ -1,0 +1,260 @@
+{
+  "users": [
+    {
+      "id": "user-chw",
+      "firstName": "Demo",
+      "lastName": "Health Worker",
+      "name": "Demo Health Worker",
+      "email": "chw@demo.ai",
+      "password": "demo123",
+      "role": "chw",
+      "imageUrl": "https://picsum.photos/seed/worker/200/200",
+      "location": "Kijiji Sector",
+      "phone": "+254 700 000 000",
+      "dob": "1990-05-15",
+      "gender": "Other",
+      "address": {
+        "line1": "Kijiji Health Post",
+        "city": "Local",
+        "country": "Kenya"
+      },
+      "allowLocation": true
+    },
+    {
+      "id": "user-clinician",
+      "firstName": "Sarah",
+      "lastName": "Mwangi",
+      "name": "Dr. Sarah Mwangi",
+      "email": "clinician@demo.ai",
+      "password": "demo123",
+      "role": "clinician",
+      "imageUrl": "https://picsum.photos/seed/clinician/200/200",
+      "location": "Regional Referral",
+      "phone": "+254 700 111 222",
+      "gender": "female",
+      "address": {
+        "line1": "Kigogo Hospital"
+      },
+      "allowLocation": true
+    },
+    {
+      "id": "user-supervisor",
+      "firstName": "System",
+      "lastName": "Supervisor",
+      "name": "System Supervisor",
+      "email": "supervisor@demo.ai",
+      "password": "demo123",
+      "role": "supervisor",
+      "imageUrl": "https://picsum.photos/seed/supervisor/200/200",
+      "location": "Ministry of Health",
+      "phone": "+254 700 222 333",
+      "gender": "female",
+      "address": {
+        "line1": "Ministry Offices"
+      },
+      "allowLocation": true
+    },
+    {
+      "id": "user-d15b0f6d-5cca-4ad4-9838-91c9c78b92f5",
+      "firstName": "jas",
+      "lastName": "trus",
+      "name": "jas trus",
+      "email": "mas@mas.ai",
+      "password": "123",
+      "role": "chw",
+      "imageUrl": "https://picsum.photos/seed/masmasai/200/200",
+      "location": "Community Clinic",
+      "allowLocation": true
+    }
+  ],
+  "patients": [
+    {
+      "id": "p1",
+      "active": true,
+      "name": "Zahara Hassan",
+      "birthDate": "2002-06-25",
+      "gender": "female",
+      "address": {
+        "text": "Kijiji Village",
+        "city": "Local"
+      },
+      "status": "Urgent",
+      "telecom": {
+        "system": "phone",
+        "value": "+254 711 000 111"
+      },
+      "updatedAt": "2026-06-25T22:11:44.178Z",
+      "nextFollowUpDate": "2026-06-25T22:11:44.178Z",
+      "chwId": "chw1",
+      "chwName": "Alex Mutua"
+    },
+    {
+      "id": "p2",
+      "active": true,
+      "name": "John Kamau",
+      "birthDate": "1981-06-25",
+      "gender": "male",
+      "address": {
+        "text": "Mlimani Sector",
+        "city": "Local"
+      },
+      "status": "Stable",
+      "telecom": {
+        "system": "phone",
+        "value": "+254 722 000 222"
+      },
+      "updatedAt": "2026-06-25T22:11:44.178Z",
+      "nextFollowUpDate": "2026-07-09T22:11:44.178Z",
+      "chwId": "chw2",
+      "chwName": "Grace Achieng"
+    },
+    {
+      "id": "p3",
+      "active": true,
+      "name": "Amina Juma",
+      "birthDate": "2014-06-25",
+      "gender": "female",
+      "address": {
+        "text": "Pwani Area",
+        "city": "Local"
+      },
+      "status": "Follow-up",
+      "telecom": {
+        "system": "phone",
+        "value": "+254 733 000 333"
+      },
+      "updatedAt": "2026-06-25T22:11:44.179Z",
+      "nextFollowUpDate": "2026-06-28T22:11:44.179Z",
+      "chwId": "chw1",
+      "chwName": "Alex Mutua"
+    },
+    {
+      "id": "p4",
+      "active": true,
+      "name": "David Omondi",
+      "birthDate": "1995-06-25",
+      "gender": "male",
+      "address": {
+        "text": "Ziwani Block",
+        "city": "Local"
+      },
+      "status": "Stable",
+      "telecom": {
+        "system": "phone",
+        "value": "+254 744 000 444"
+      },
+      "updatedAt": "2026-06-24T22:11:44.179Z",
+      "nextFollowUpDate": "2026-07-16T22:11:44.179Z",
+      "chwId": "chw2",
+      "chwName": "Grace Achieng"
+    }
+  ],
+  "encounters": [
+    {
+      "id": "e1",
+      "status": "finished",
+      "subject": "p1",
+      "date": "2026-06-25T20:11:44.179Z",
+      "summary": "Emergency presentation: Prolonged convulsive seizure lasting 7 minutes. Status Epilepticus protocol initiated.",
+      "redFlags": [
+        "Status Epilepticus Risk (Duration >= 5m)",
+        "Repeated Seizures (Cluster Risk)"
+      ],
+      "recommendation": {
+        "action": "Refer",
+        "urgencyLevel": "EMERGENCY",
+        "referralDestination": "KUTRRH Specialist Unit",
+        "antiStigmaMessages": [
+          "Epilepsy is medical condition.",
+          "Epilepsy is NOT contagious."
+        ],
+        "safetyAdvice": [
+          "Avoid cooking over open fires alone."
+        ]
+      },
+      "type": "Emergency",
+      "authorName": "Alex Mutua",
+      "authorRole": "CHW",
+      "patientId": "p1"
+    }
+  ],
+  "clinicians": [
+    {
+      "id": "c1",
+      "name": "Dr. Sarah Mwangi",
+      "role": "Senior Neurologist",
+      "hospital": "National Referral",
+      "email": "s.mwangi@health.go.ke",
+      "phone": "+254 700 111 222",
+      "license": "KMPDC-9982",
+      "status": "Approved"
+    }
+  ],
+  "chws": [
+    {
+      "id": "chw1",
+      "name": "Alex Mutua",
+      "sector": "Kijiji Village",
+      "activePatients": 28,
+      "email": "a.mutua@chw.org",
+      "phone": "+254 711 555 666",
+      "performance": "Excellent",
+      "status": "Approved"
+    }
+  ],
+  "facilities": [
+    {
+      "id": "f1",
+      "name": "Kenyatta University Teaching Hospital (KUTRRH)",
+      "type": "specialist",
+      "coordinates": {
+        "lat": -1.1747,
+        "lng": 36.9264
+      },
+      "capabilities": [
+        "Tertiary Epilepsy Care",
+        "Neurology Specialist"
+      ],
+      "contact": "+254 800 721 038",
+      "isOpen24h": true
+    }
+  ],
+  "sessions": [
+    {
+      "token": "f69bf6d1-15b4-4cbe-a772-398a0482a735",
+      "userId": "user-chw",
+      "createdAt": "2026-06-25T22:11:44.183Z",
+      "expiresAt": "2026-07-02T22:11:44.183Z"
+    },
+    {
+      "token": "d4f701d2-c71c-4f1a-a329-585fa5f2a2d6",
+      "userId": "user-chw",
+      "createdAt": "2026-06-25T22:13:52.831Z",
+      "expiresAt": "2026-07-02T22:13:52.831Z"
+    },
+    {
+      "token": "8d24d190-7933-4a2f-a5b3-718766487ba9",
+      "userId": "user-d15b0f6d-5cca-4ad4-9838-91c9c78b92f5",
+      "createdAt": "2026-06-25T22:14:41.423Z",
+      "expiresAt": "2026-07-02T22:14:41.423Z"
+    },
+    {
+      "token": "728151c1-27cc-4499-8877-47ab71acfac9",
+      "userId": "user-chw",
+      "createdAt": "2026-06-26T20:58:32.975Z",
+      "expiresAt": "2026-07-03T20:58:32.975Z"
+    },
+    {
+      "token": "d386d9cf-b87d-4ff9-993f-5ea302fcacd5",
+      "userId": "user-chw",
+      "createdAt": "2026-06-26T21:12:09.777Z",
+      "expiresAt": "2026-07-03T21:12:09.777Z"
+    },
+    {
+      "token": "9f13dc4f-b18f-44e5-9540-146c28d77e3b",
+      "userId": "user-chw",
+      "createdAt": "2026-06-26T21:14:47.913Z",
+      "expiresAt": "2026-07-03T21:14:47.913Z"
+    }
+  ]
+}

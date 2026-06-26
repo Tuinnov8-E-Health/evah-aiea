@@ -28,25 +28,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { mockPatients, mockUserProfile, mockCHWs, mockClinicians, mockHealthFacilities } from "@/lib/mock-data";
+import { fetchPatients, fetchRegistry, getStoredUser } from '@/lib/client-api';
 import { differenceInDays, parseISO, isValid, differenceInYears } from "date-fns";
 
 export default function Dashboard() {
   const [role, setRole] = useState<string>('chw');
+  const [userName, setUserName] = useState<string>('Care Team');
   const [patients, setPatients] = useState<any[]>([]);
-  const [isDemo, setIsDemo] = useState(false);
-  
+  const [registry, setRegistry] = useState<{ clinicians: any[]; chws: any[]; facilities: any[] } | null>(null);
+
   useEffect(() => {
-    const savedRole = localStorage.getItem('demo_role');
-    const demoFlag = localStorage.getItem('is_demo') === 'true';
-    if (savedRole) setRole(savedRole);
-    setIsDemo(demoFlag);
-    
-    if (demoFlag) {
-      setPatients(mockPatients);
-    } else {
-      setPatients([]);
+    const sessionUser = getStoredUser();
+    if (sessionUser) {
+      setRole(sessionUser.role);
+      setUserName(sessionUser.name.split(' ')[0] || sessionUser.name);
     }
+
+    fetchPatients()
+      .then((result) => setPatients(result.patients))
+      .catch(() => setPatients([]));
+
+    fetchRegistry()
+      .then((result) => setRegistry(result.registry))
+      .catch(() => setRegistry(null));
   }, []);
 
   const isSupervisor = role === 'supervisor';
@@ -54,7 +58,10 @@ export default function Dashboard() {
   const isCHW = role === 'chw';
   
   const urgentCount = patients.filter(p => p.status === 'Urgent').length;
-  const myPatientsCount = isCHW ? (isDemo ? 28 : 0) : (isDemo ? 1240 : 0);
+  const myPatientsCount = patients.length;
+  const clinicianCount = registry?.clinicians.length ?? 0;
+  const facilityCount = registry?.facilities.length ?? 0;
+  const chwCount = registry?.chws.length ?? 0;
 
   const getFollowUpDays = (patient: any) => {
     if (patient.status === 'Urgent') return 0;
@@ -79,7 +86,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-headline font-bold text-primary">
-          Habari, {mockUserProfile.firstName}
+          Habari, {userName}
         </h1>
         <p className="text-sm text-muted-foreground">
           {isSupervisor ? "System Supervision & Monitoring" : isClinician ? "Clinical Review & CHW Oversight" : "AI Epilepsy Assistant Dashboard"}
@@ -117,7 +124,7 @@ export default function Dashboard() {
                 <Stethoscope className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">{isDemo ? mockClinicians.length : '0'}</div>
+                <div className="text-2xl font-bold text-primary">{clinicianCount}</div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Clinicians</p>
               </CardContent>
             </Card>
@@ -126,7 +133,7 @@ export default function Dashboard() {
                 <Building2 className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent className="p-4 pt-2">
-                <div className="text-2xl font-bold text-primary">{isDemo ? mockHealthFacilities.length : '0'}</div>
+                <div className="text-2xl font-bold text-primary">{facilityCount}</div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Health Facilities</p>
               </CardContent>
             </Card>
@@ -139,7 +146,7 @@ export default function Dashboard() {
               <UserCheck className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent className="p-4 pt-2">
-              <div className="text-2xl font-bold text-primary">{isDemo ? mockCHWs.length : '0'}</div>
+              <div className="text-2xl font-bold text-primary">{chwCount}</div>
               <p className="text-[10px] uppercase font-bold text-muted-foreground">CHWs in Circle</p>
             </CardContent>
           </Card>
@@ -151,7 +158,7 @@ export default function Dashboard() {
               <History className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent className="p-4 pt-2">
-              <div className="text-2xl font-bold text-primary">{isDemo ? '28' : '0'}</div>
+              <div className="text-2xl font-bold text-primary">{patients.length}</div>
               <p className="text-[10px] uppercase font-bold text-muted-foreground">Encounters Done</p>
             </CardContent>
           </Card>
