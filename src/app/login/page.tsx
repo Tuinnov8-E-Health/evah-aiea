@@ -56,8 +56,11 @@ export default function LoginPage() {
       if (!demo) throw new Error('Invalid demo role');
       const response = await login(demo.email, demo.password);
       saveSession(response.token, response.user);
+      localStorage.setItem('is_demo', 'true');
       toast({ title: 'Demo Login', description: `Logged in as ${role.toUpperCase()}` });
-      router.push('/dashboard');
+      router.replace('/dashboard').catch(() => {
+        window.location.href = '/dashboard';
+      });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Demo Login Failed', description: error?.message || 'Unable to authenticate demo user.' });
     } finally {
@@ -80,14 +83,14 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="name@example.ai" 
-                  className="h-12 text-lg" 
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.ai"
+                  className="h-12 text-lg"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -95,13 +98,13 @@ export default function LoginPage() {
                   <Label htmlFor="password">Password</Label>
                   <span className="text-sm text-primary/60 font-semibold cursor-pointer">Forgot?</span>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  className="h-12 text-lg" 
+                <Input
+                  id="password"
+                  type="password"
+                  className="h-12 text-lg"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required 
+                  required
                 />
               </div>
               <Button type="submit" className="w-full bg-primary h-14 text-xl font-headline shadow-lg shadow-primary/20" disabled={loading}>
