@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import crypto from 'crypto';
 import { Patient, Encounter, Role } from '@/lib/types';
 import { mockPatients, mockEncounters, mockClinicians, mockCHWs, mockHealthFacilities, mockUserProfile } from '@/lib/mock-data';
@@ -39,6 +40,7 @@ type DB = {
 };
 
 const dataFile = path.join(process.cwd(), 'data', 'aiea-db.json');
+const tempDataFile = path.join(os.tmpdir(), 'aiea-db.json');
 
 const defaultUsers: StoredUser[] = [
   {
@@ -103,23 +105,50 @@ const defaultDb: DB = {
   sessions: [],
 };
 
+async function isWritable(filePath: string) {
+  try {
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.access(filePath, fs.constants.W_OK).catch(() => { });
+    await fs.writeFile(filePath, '', { flag: 'a' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function ensureDataFile() {
   try {
     await fs.access(dataFile);
   } catch {
-    await fs.mkdir(path.dirname(dataFile), { recursive: true });
-    await fs.writeFile(dataFile, JSON.stringify(defaultDb, null, 2), 'utf-8');
+    try {
+      await fs.mkdir(path.dirname(dataFile), { recursive: true });
+      await fs.writeFile(dataFile, JSON.stringify(defaultDb, null, 2), 'utf-8');
+      return;
+    } catch {
+      await fs.writeFile(tempDataFile, JSON.stringify(defaultDb, null, 2), 'utf-8');
+      return;
+    }
   }
 }
 
 async function readDb(): Promise<DB> {
   await ensureDataFile();
-  const raw = await fs.readFile(dataFile, 'utf-8');
-  return JSON.parse(raw) as DB;
+
+  try {
+    const raw = await fs.readFile(dataFile, 'utf-8');
+    return JSON.parse(raw) as DB;
+  } catch {
+    const raw = await fs.readFile(tempDataFile, 'utf-8');
+    return JSON.parse(raw) as DB;
+  }
 }
 
 async function writeDb(db: DB): Promise<void> {
-  await fs.writeFile(dataFile, JSON.stringify(db, null, 2), 'utf-8');
+  try {
+    await fs.writeFile(dataFile, JSON.stringify(db, null, 2), 'utf-8');
+  } catch {
+    await fs.writeFile(tempDataFile, JSON.stringify(db, null, 2), 'utf-8');
+  }
 }
 
 export async function getUserByEmail(email: string): Promise<StoredUser | undefined> {
