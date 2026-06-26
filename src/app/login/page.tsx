@@ -34,7 +34,7 @@ export default function LoginPage() {
       const response = await login(email, password);
       saveSession(response.token, response.user);
       toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Login Failed', description: error?.message || 'Unable to authenticate.' });
     } finally {
@@ -58,9 +58,7 @@ export default function LoginPage() {
       saveSession(response.token, response.user);
       localStorage.setItem('is_demo', 'true');
       toast({ title: 'Demo Login', description: `Logged in as ${role.toUpperCase()}` });
-      router.replace('/dashboard').catch(() => {
-        window.location.href = '/dashboard';
-      });
+      window.location.href = '/dashboard';
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Demo Login Failed', description: error?.message || 'Unable to authenticate demo user.' });
     } finally {
