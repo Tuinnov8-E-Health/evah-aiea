@@ -55,22 +55,6 @@ export default function LoginPage() {
         imageUrl: '',
         location: '',
       },
-      clinician: {
-        id: 'user-clinician',
-        name: 'Dr. Sarah Mwangi',
-        email: 'clinician@demo.ai',
-        role: 'clinician',
-        imageUrl: 'https://picsum.photos/seed/clinician/200/200',
-        location: 'Regional Referral',
-      },
-      supervisor: {
-        id: 'user-supervisor',
-        name: 'System Supervisor',
-        email: 'supervisor@demo.ai',
-        role: 'supervisor',
-        imageUrl: 'https://picsum.photos/seed/supervisor/200/200',
-        location: 'Ministry of Health',
-      },
     };
 
     try {
@@ -143,16 +127,10 @@ export default function LoginPage() {
             </form>
 
             <div className="pt-6 border-t mt-6">
-              <p className="text-xs font-bold uppercase text-muted-foreground mb-3 text-center tracking-widest">Prototype Demo Accounts</p>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              <p className="text-xs font-bold uppercase text-muted-foreground mb-3 text-center tracking-widest">Demo Account</p>
+              <div className="grid grid-cols-1 gap-2">
                 <Button variant="outline" size="sm" className="text-[10px] h-14 flex flex-col gap-1" onClick={() => handleDemoLogin('chw-minimal')}>
                   <UserCheck className="h-4 w-4 text-blue-600" /> CHW Minimal
-                </Button>
-                <Button variant="outline" size="sm" className="text-[10px] h-14 flex flex-col gap-1" onClick={() => handleDemoLogin('clinician')}>
-                  <Key className="h-4 w-4 text-green-600" /> Clinician
-                </Button>
-                <Button variant="outline" size="sm" className="text-[10px] h-14 flex flex-col gap-1" onClick={() => handleDemoLogin('supervisor')}>
-                  <Shield className="h-4 w-4 text-purple-600" /> Supervisor
                 </Button>
               </div>
             </div>
