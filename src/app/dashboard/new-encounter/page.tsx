@@ -8,10 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  ChevronRight, 
-  ChevronLeft, 
-  UserCircle, 
+import {
+  ChevronRight,
+  ChevronLeft,
+  UserCircle,
   Loader2,
   Edit3,
   MapPin,
@@ -33,13 +33,13 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
 import { Recommendation, ClinicalInput } from '@/lib/clinical-engine/types';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { FacilityMap } from '@/components/dashboard/facility-map';
 import { usePrint } from '@/hooks/usePrint';
@@ -61,6 +61,7 @@ function NewEncounterContent() {
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [hasConsent, setHasConsent] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
   const [overrideData, setOverrideData] = useState({ reason: '', notes: '' });
 
   // Patient Data State
@@ -137,7 +138,7 @@ function NewEncounterContent() {
 
   const runAssessment = () => {
     setStep('assessment');
-    
+
     const input: ClinicalInput = {
       patientProfile: { age: calculatedAge, sex: patientData.sex, isPregnant: patientData.isPregnant, weightKg: Number(patientData.weight) },
       seizureHistory: {
@@ -165,17 +166,29 @@ function NewEncounterContent() {
     }, 1500);
   };
 
-  const handleApprove = () => {
-    if (recommendation) saveEncounterToHistory(recommendation);
+  const handlePrepareFinalReport = () => {
     setStep('final');
-    toast({ title: "Recommendation Approved", description: "Encounter logged to clinical history." });
+    setReportSubmitted(false);
+    toast({ title: "Report Review Ready", description: "Review the final report and submit when ready." });
+  };
+
+  const handleSubmitReport = () => {
+    if (!recommendation) {
+      toast({ variant: 'destructive', title: 'No Recommendation', description: 'There is no clinical recommendation to submit.' });
+      return;
+    }
+
+    const isOverride = Boolean(overrideData.reason);
+    saveEncounterToHistory(recommendation, isOverride);
+    setReportSubmitted(true);
+    toast({ title: "Report Submitted", description: "The final report has been logged and is ready for download." });
   };
 
   const handleOverrideComplete = () => {
-    if (recommendation) saveEncounterToHistory(recommendation, true);
     setShowOverrideDialog(false);
     setStep('final');
-    toast({ title: "Override Logged", description: "Encounter registered with clinical discordance notes." });
+    setReportSubmitted(false);
+    toast({ title: "Override Applied", description: "The final report now includes your clinical reasoning." });
   };
 
   const handleDownload = () => {
@@ -188,7 +201,7 @@ function NewEncounterContent() {
   const toggleItem = (list: 'semiology', item: string) => {
     setHistoryData((prev) => ({
       ...prev,
-      [list]: prev[list].includes(item) 
+      [list]: prev[list].includes(item)
         ? prev[list].filter((i: string) => i !== item)
         : [...prev[list], item]
     }));
@@ -248,12 +261,12 @@ function NewEncounterContent() {
             <CardTitle className="text-lg flex items-center gap-2 text-primary font-headline italic"><UserCircle className="h-5 w-5" /> 1. Patient Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({...patientData, name: e.target.value})} placeholder="Full legal name" readOnly={!!initialPatient} /></div>
-            <div className="space-y-2"><Label>Location / Sector</Label><Input value={patientData.location} onChange={e => setPatientData({...patientData, location: e.target.value})} placeholder="Village, Sector, or Cell" readOnly={!!initialPatient} /></div>
+            <div className="space-y-2"><Label>Full Name</Label><Input value={patientData.name} onChange={e => setPatientData({ ...patientData, name: e.target.value })} placeholder="Full legal name" readOnly={!!initialPatient} /></div>
+            <div className="space-y-2"><Label>Location / Sector</Label><Input value={patientData.location} onChange={e => setPatientData({ ...patientData, location: e.target.value })} placeholder="Village, Sector, or Cell" readOnly={!!initialPatient} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({...patientData, dob: e.target.value})} readOnly={!!initialPatient} /></div>
+              <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={patientData.dob} onChange={e => setPatientData({ ...patientData, dob: e.target.value })} readOnly={!!initialPatient} /></div>
               <div className="space-y-2"><Label>Sex</Label>
-                <Select value={patientData.sex} onValueChange={v => setPatientData({...patientData, sex: v})} disabled={!!initialPatient}>
+                <Select value={patientData.sex} onValueChange={v => setPatientData({ ...patientData, sex: v })} disabled={!!initialPatient}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
@@ -265,7 +278,7 @@ function NewEncounterContent() {
             </div>
             {patientData.sex === 'female' && (
               <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border border-dashed">
-                <Checkbox id="pregnant" checked={patientData.isPregnant} onCheckedChange={c => setPatientData({...patientData, isPregnant: !!c})} />
+                <Checkbox id="pregnant" checked={patientData.isPregnant} onCheckedChange={c => setPatientData({ ...patientData, isPregnant: !!c })} />
                 <Label htmlFor="pregnant" className="text-xs font-bold leading-relaxed cursor-pointer">Currently Pregnant? (High Risk Profile)</Label>
               </div>
             )}
@@ -285,7 +298,7 @@ function NewEncounterContent() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Seizure Category</Label>
-              <Select value={historyData.type} onValueChange={v => setHistoryData({...historyData, type: v})}>
+              <Select value={historyData.type} onValueChange={v => setHistoryData({ ...historyData, type: v })}>
                 <SelectTrigger><SelectValue placeholder="Select WHO category" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="convulsive">Convulsive (Generalized)</SelectItem>
@@ -294,25 +307,25 @@ function NewEncounterContent() {
                 </SelectContent>
               </Select>
               {historyData.type === 'other' && (
-                <Input 
-                  className="mt-2" 
-                  placeholder="Describe seizure type..." 
-                  value={historyData.otherType} 
-                  onChange={e => setHistoryData({...historyData, otherType: e.target.value})} 
+                <Input
+                  className="mt-2"
+                  placeholder="Describe seizure type..."
+                  value={historyData.otherType}
+                  onChange={e => setHistoryData({ ...historyData, otherType: e.target.value })}
                 />
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label>Semiology (Observed Signs)</Label>
               <div className="grid grid-cols-2 gap-2">
                 {['Motor Jerking', 'Stiffness', 'Loss of Awareness', 'Tongue Biting', 'Other'].map(s => (
-                  <Button 
-                    key={s} 
-                    type="button" 
-                    variant={historyData.semiology.includes(s) ? 'default' : 'outline'} 
-                    size="sm" 
-                    className="h-8 text-[10px] uppercase font-bold" 
+                  <Button
+                    key={s}
+                    type="button"
+                    variant={historyData.semiology.includes(s) ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-8 text-[10px] uppercase font-bold"
                     onClick={() => toggleItem('semiology', s)}
                   >
                     {s}
@@ -320,22 +333,22 @@ function NewEncounterContent() {
                 ))}
               </div>
               {historyData.semiology.includes('Other') && (
-                <Input 
-                  className="mt-2" 
-                  placeholder="Describe other signs..." 
-                  value={historyData.otherSemiology} 
-                  onChange={e => setHistoryData({...historyData, otherSemiology: e.target.value})} 
+                <Input
+                  className="mt-2"
+                  placeholder="Describe other signs..."
+                  value={historyData.otherSemiology}
+                  onChange={e => setHistoryData({ ...historyData, otherSemiology: e.target.value })}
                 />
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="flex items-center gap-1"><Clock className="h-3 w-3" /> Duration (min)</Label><Input type="number" value={historyData.duration} onChange={e => setHistoryData({...historyData, duration: e.target.value})} placeholder="e.g. 5" /></div>
-              <div className="space-y-2"><Label>Freq (/month)</Label><Input type="number" value={historyData.frequency} onChange={e => setHistoryData({...historyData, frequency: e.target.value})} placeholder="e.g. 2" /></div>
+              <div className="space-y-2"><Label className="flex items-center gap-1"><Clock className="h-3 w-3" /> Duration (min)</Label><Input type="number" value={historyData.duration} onChange={e => setHistoryData({ ...historyData, duration: e.target.value })} placeholder="e.g. 5" /></div>
+              <div className="space-y-2"><Label>Freq (/month)</Label><Input type="number" value={historyData.frequency} onChange={e => setHistoryData({ ...historyData, frequency: e.target.value })} placeholder="e.g. 2" /></div>
             </div>
 
             <div className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border border-dashed">
-              <Checkbox id="repeated" checked={historyData.isRepeated} onCheckedChange={c => setHistoryData({...historyData, isRepeated: !!c})} />
+              <Checkbox id="repeated" checked={historyData.isRepeated} onCheckedChange={c => setHistoryData({ ...historyData, isRepeated: !!c })} />
               <Label htmlFor="repeated" className="text-xs font-bold leading-relaxed cursor-pointer">Repeated seizures without recovery between?</Label>
             </div>
 
@@ -363,7 +376,7 @@ function NewEncounterContent() {
                 { id: 'suddenOnsetNeurological', label: 'Sudden weakness/speech loss' }
               ].map(cause => (
                 <div key={cause.id} className="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                  <Checkbox id={cause.id} checked={(causesData as any)[cause.id]} onCheckedChange={c => setCausesData({...causesData, [cause.id]: !!c})} />
+                  <Checkbox id={cause.id} checked={(causesData as any)[cause.id]} onCheckedChange={c => setCausesData({ ...causesData, [cause.id]: !!c })} />
                   <Label htmlFor={cause.id} className="text-xs font-bold leading-relaxed cursor-pointer">{cause.label}</Label>
                 </div>
               ))}
@@ -371,10 +384,10 @@ function NewEncounterContent() {
 
             <div className="space-y-2 pt-2">
               <Label className="text-xs font-bold uppercase text-muted-foreground">Other Relevant Findings</Label>
-              <Textarea 
-                placeholder="List any other symptoms or history..." 
-                value={causesData.otherCause} 
-                onChange={e => setCausesData({...causesData, otherCause: e.target.value})} 
+              <Textarea
+                placeholder="List any other symptoms or history..."
+                value={causesData.otherCause}
+                onChange={e => setCausesData({ ...causesData, otherCause: e.target.value })}
                 className="rounded-xl min-h-[80px]"
               />
             </div>
@@ -441,7 +454,7 @@ function NewEncounterContent() {
                     <p className="text-sm font-medium text-slate-700 italic">"{recommendation.followUpPlan}"</p>
                   </div>
                 </section>
-                
+
                 <section className="bg-white p-3 rounded-lg border border-dashed border-primary/20">
                   <Label className="text-[10px] uppercase text-primary tracking-widest font-bold flex items-center gap-1 mb-2"><Info className="h-3 w-3" /> 4. Counseling & Safety Warnings</Label>
                   <div className="space-y-3">
@@ -475,8 +488,8 @@ function NewEncounterContent() {
           </Card>
 
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-14 font-bold shadow-lg bg-primary text-white" onClick={handleApprove}><CheckCircle2 className="mr-2 h-5 w-5" /> Approve Recommendation</Button>
-            <Button variant="outline" className="w-full h-12" onClick={() => setShowOverrideDialog(true)}><Edit3 className="h-4 w-4 mr-2" /> Clinical Override</Button>
+            <Button className="w-full h-14 font-bold shadow-lg bg-primary text-white" onClick={handlePrepareFinalReport}><CheckCircle2 className="mr-2 h-5 w-5" /> Submit Report</Button>
+            <Button variant="outline" className="w-full h-12" onClick={() => { setStep('final'); setShowOverrideDialog(true); setReportSubmitted(false); }}><Edit3 className="h-4 w-4 mr-2" /> Override Report</Button>
           </div>
         </div>
       )}
@@ -559,8 +572,8 @@ function NewEncounterContent() {
                   <div className="space-y-2 text-sm italic text-red-900">
                     <p><strong>Reason:</strong> {
                       overrideData.reason === 'context' ? 'AI missed clinical context' :
-                      overrideData.reason === 'protocol' ? 'Local protocol variation' :
-                      'Expert clinical judgment'
+                        overrideData.reason === 'protocol' ? 'Local protocol variation' :
+                          'Expert clinical judgment'
                     }</p>
                     <p><strong>Justification:</strong> {overrideData.notes}</p>
                   </div>
@@ -578,10 +591,18 @@ function NewEncounterContent() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-4">
-            <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
-            <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return to Dashboard</Button>
-          </div>
+          {!reportSubmitted ? (
+            <div className="grid grid-cols-3 gap-3 pt-4">
+              <Button className="h-12 font-bold bg-primary text-white" onClick={handleSubmitReport}>Submit Report</Button>
+              <Button variant="outline" className="h-12 font-bold text-muted-foreground" onClick={() => setShowOverrideDialog(true)}>Override Report</Button>
+              <Button variant="ghost" className="h-12 font-bold text-muted-foreground" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 pt-4">
+              <Button className="h-12 font-bold bg-primary text-white" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
+              <Button variant="ghost" className="col-span-2 h-12 text-muted-foreground font-bold" onClick={() => router.push('/dashboard')}><X className="mr-2 h-4 w-4" /> Return to Dashboard</Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -595,7 +616,7 @@ function NewEncounterContent() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest">Reason for Discordance</Label>
-              <Select onValueChange={v => setOverrideData({...overrideData, reason: v})}>
+              <Select onValueChange={v => setOverrideData({ ...overrideData, reason: v })}>
                 <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select reason" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="context">AI missed clinical context</SelectItem>
@@ -606,19 +627,19 @@ function NewEncounterContent() {
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest">Justification Notes</Label>
-              <Textarea 
-                value={overrideData.notes} 
-                onChange={e => setOverrideData({...overrideData, notes: e.target.value})} 
-                placeholder="Describe your reasoning for overriding the suggestive clinical protocol..." 
-                className="rounded-xl min-h-[100px]" 
+              <Textarea
+                value={overrideData.notes}
+                onChange={e => setOverrideData({ ...overrideData, notes: e.target.value })}
+                placeholder="Describe your reasoning for overriding the suggestive clinical protocol..."
+                className="rounded-xl min-h-[100px]"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button 
-              variant="destructive" 
-              className="w-full h-14 font-bold rounded-2xl shadow-lg" 
-              disabled={!overrideData.reason || !overrideData.notes} 
+            <Button
+              variant="destructive"
+              className="w-full h-14 font-bold rounded-2xl shadow-lg"
+              disabled={!overrideData.reason || !overrideData.notes}
               onClick={handleOverrideComplete}
             >
               Confirm Clinical Override
