@@ -3,10 +3,10 @@
 import { use, useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { 
-  ChevronLeft, 
-  Download, 
-  Calendar as CalendarIcon, 
+import {
+  ChevronLeft,
+  Download,
+  Calendar as CalendarIcon,
   FileText,
   Clock,
   Filter,
@@ -14,25 +14,25 @@ import {
   Edit3,
   FileSearch
 } from 'lucide-react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { format, isAfter, subHours, isValid, differenceInHours } from 'date-fns';
+import { format, isAfter, subHours, isValid, differenceInHours, eachDayOfInterval, startOfDay } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { usePrint } from '@/hooks/usePrint';
 import { mockPatients, mockEncounters } from '@/lib/mock-data';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -70,11 +70,11 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
   const isClinician = role === 'clinician';
 
   const patient = mockPatients.find(p => p.id === id);
-  
+
   const patientEncounters = useMemo(() => {
     const base = mockEncounters.filter(e => e.patientId === id);
     const session = sessionEncounters.filter(e => e.patientId === id);
-    return [...session, ...base].sort((a, b) => 
+    return [...session, ...base].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [id, sessionEncounters]);
@@ -85,12 +85,27 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
     const now = new Date();
     const days = parseInt(timeFilter);
     const cutoff = subHours(now, days * 24);
-    
+
     return patientEncounters.filter(e => {
       const date = new Date(e.date);
       return isValid(date) && isAfter(date, cutoff);
     });
   }, [patientEncounters, timeFilter]);
+
+  const dailyHistory = useMemo(() => {
+    return filteredEncounters
+      .reduce((groups: { date: Date; encounters: Encounter[] }[], encounter) => {
+        const encounterDate = startOfDay(new Date(encounter.date));
+        const existing = groups.find((group) => format(group.date, 'yyyy-MM-dd') === format(encounterDate, 'yyyy-MM-dd'));
+        if (existing) {
+          existing.encounters.push(encounter);
+        } else {
+          groups.push({ date: encounterDate, encounters: [encounter] });
+        }
+        return groups;
+      }, [])
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [filteredEncounters]);
 
   const handleOverrideSubmit = () => {
     if (selectedEncounter) {
@@ -104,7 +119,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
         isClinicianUpdated: true,
         discordanceNote: `Clinician certification: ${overrideNotes}`
       };
-      
+
       const newSession = [...sessionEncounters, updatedEncounter];
       setSessionEncounters(newSession);
       localStorage.setItem('session_encounters', JSON.stringify(newSession));
@@ -256,56 +271,63 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
 
       <div className="space-y-6">
         {filteredEncounters.length > 0 ? (
-          filteredEncounters.map((encounter) => {
-            return (
-              <Card key={encounter.id} className={cn(
-                "border-none shadow-md overflow-hidden bg-card/50",
-                encounter.isClinicianUpdated && "ring-1 ring-blue-500/20"
-              )}>
-                <CardHeader className="p-4 bg-muted/20 border-b">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-primary font-bold">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm">{formatSafeDate(encounter.date)}</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
-                          <User className="h-3 w-3" /> Author: {encounter.authorName} ({encounter.authorRole})
-                        </p>
-                        {encounter.isClinicianUpdated && (
-                          <Badge className="bg-blue-600 w-fit h-4 text-[8px] uppercase">Clinician Certified</Badge>
-                        )}
-                      </div>
+          filteredEncounters.map((encounter) => (
+            <Card key={encounter.id} className={cn(
+              'border-none shadow-md overflow-hidden bg-card/40',
+              encounter.isClinicianUpdated && 'ring-1 ring-blue-500/20'
+            )}>
+              <CardHeader className="p-4 bg-muted/20 border-b">
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-primary font-bold">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm">{formatSafeDate(encounter.date, 'PPP')}</span>
                     </div>
-                    {isClinician && !encounter.isClinicianUpdated && (
-                      <Button size="sm" variant="ghost" onClick={() => { setSelectedEncounter(encounter); setShowOverride(true); }} className="h-8 text-[10px] font-bold text-primary uppercase">
-                        <Edit3 className="h-3 w-3 mr-1" /> Review
-                      </Button>
-                    )}
+                    <p className="text-[11px] text-muted-foreground">{encounter.authorName} ({encounter.authorRole})</p>
                   </div>
-                </CardHeader>
-                <CardContent className="p-4 space-y-4">
-                  <section>
-                    <div className="flex items-center gap-2 mb-1 text-muted-foreground">
-                      <FileText className="h-3 w-3" />
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest">Summary</h4>
+                  {encounter.isClinicianUpdated && (
+                    <Badge className="bg-blue-600 w-fit h-4 text-[8px] uppercase">Clinician Certified</Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                <div className="rounded-2xl border border-muted/70 bg-white/80 p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">{encounter.type} report</p>
+                      <p className="text-sm font-semibold text-foreground">{encounter.summary}</p>
                     </div>
-                    <p className="text-sm leading-relaxed text-foreground/90">{encounter.summary}</p>
-                  </section>
-
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 h-9 text-[10px] font-bold uppercase tracking-widest" onClick={() => { setSelectedEncounter(encounter); setShowFullReport(true); }}>
+                    <Badge variant="outline" className="h-7 text-[10px] uppercase font-bold tracking-widest">
+                      {encounter.recommendation.urgencyLevel}
+                    </Badge>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl bg-slate-50 p-3 text-[12px] leading-relaxed">
+                      <p className="font-bold uppercase text-[10px] tracking-widest">AI Recommendation</p>
+                      <p>{encounter.recommendation.action}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">{encounter.recommendation.followUpPlan}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3 text-[12px] leading-relaxed">
+                      <p className="font-bold uppercase text-[10px] tracking-widest">Safety Advice</p>
+                      <ul className="list-disc pl-4">
+                        {encounter.recommendation.safetyAdvice?.map((advice, idx) => (
+                          <li key={idx}>{advice}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-widest" onClick={() => { setSelectedEncounter(encounter); setShowFullReport(true); }}>
                       <FileSearch className="h-3 w-3 mr-2" /> View Detailed Report
                     </Button>
                     <Button variant="ghost" size="sm" className="shrink-0 h-9" onClick={() => handleDownload(encounter)}>
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
+                </div>
+              </CardContent>
+            </Card>
+          ))
         ) : (
           <div className="text-center py-20 bg-muted/10 rounded-2xl border-2 border-dashed">
             <CalendarIcon className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
@@ -406,10 +428,10 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest">Specialist Review Notes</Label>
-              <Textarea 
-                value={overrideNotes} 
-                onChange={e => setOverrideNotes(e.target.value)} 
-                placeholder="Add manual clinical findings or diagnostic plans..." 
+              <Textarea
+                value={overrideNotes}
+                onChange={e => setOverrideNotes(e.target.value)}
+                placeholder="Add manual clinical findings or diagnostic plans..."
                 className="rounded-xl min-h-[120px] border-muted"
               />
             </div>
