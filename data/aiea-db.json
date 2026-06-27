@@ -1,24 +1,16 @@
 {
   "users": [
     {
-      "id": "user-chw",
-      "firstName": "Demo",
-      "lastName": "Health Worker",
-      "name": "Demo Health Worker",
-      "email": "chw@demo.ai",
+      "id": "user-chw-minimal",
+      "firstName": "Amina",
+      "lastName": "Njoroge",
+      "name": "Amina Njoroge",
+      "email": "chw-minimal@demo.ai",
       "password": "demo123",
       "role": "chw",
-      "imageUrl": "https://picsum.photos/seed/worker/200/200",
-      "location": "Kijiji Sector",
-      "phone": "+254 700 000 000",
-      "dob": "1990-05-15",
-      "gender": "Other",
-      "address": {
-        "line1": "Kijiji Health Post",
-        "city": "Local",
-        "country": "Kenya"
-      },
-      "allowLocation": true
+      "imageUrl": "",
+      "location": "",
+      "allowLocation": false
     },
     {
       "id": "user-clinician",
@@ -255,6 +247,12 @@
       "userId": "user-chw",
       "createdAt": "2026-06-26T21:14:47.913Z",
       "expiresAt": "2026-07-03T21:14:47.913Z"
+    },
+    {
+      "token": "15210cb1-db69-4c7f-b063-4e9630408be1",
+      "userId": "user-chw-minimal",
+      "createdAt": "2026-06-27T01:24:16.970Z",
+      "expiresAt": "2026-07-04T01:24:16.970Z"
     }
   ]
 }

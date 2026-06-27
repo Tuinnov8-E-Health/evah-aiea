@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useMemo } from 'react';
+import { useState, Suspense, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
 import { Recommendation, ClinicalInput } from '@/lib/clinical-engine/types';
+import { getStoredUser, UserSession } from '@/lib/client-api';
 import {
   Dialog,
   DialogContent,
@@ -44,7 +45,7 @@ import {
 import { FacilityMap } from '@/components/dashboard/facility-map';
 import { usePrint } from '@/hooks/usePrint';
 import { format } from 'date-fns';
-import { mockUserProfile, mockPatients } from '@/lib/mock-data';
+import { mockPatients } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { Encounter } from '@/lib/types';
 
@@ -99,6 +100,7 @@ function NewEncounterContent() {
   });
 
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [user, setUser] = useState<UserSession | null>(null);
 
   const calculatedAge = useMemo(() => {
     if (initialPatient?.age) return initialPatient.age;
@@ -127,9 +129,9 @@ function NewEncounterContent() {
       },
       type: rec.urgencyLevel === 'EMERGENCY' ? 'Emergency' : 'Routine',
       discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
-      authorName: mockUserProfile.name,
-      authorRole: mockUserProfile.role.toUpperCase(),
-      isClinicianUpdated: mockUserProfile.role === 'clinician'
+      authorName: user?.name || 'Unknown',
+      authorRole: user?.role?.toUpperCase() || 'UNKNOWN',
+      isClinicianUpdated: user?.role === 'clinician'
     };
 
     const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
@@ -197,6 +199,11 @@ function NewEncounterContent() {
       print(<div className="report-print-container" dangerouslySetInnerHTML={{ __html: reportHtml.innerHTML }} />);
     }
   };
+
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) setUser(storedUser);
+  }, []);
 
   const toggleItem = (list: 'semiology', item: string) => {
     setHistoryData((prev) => ({
@@ -583,9 +590,9 @@ function NewEncounterContent() {
               <section className="pt-10 bg-white">
                 <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">Record Attribution</h2>
                 <div className="text-sm space-y-1 italic">
-                  <p><strong>Author:</strong> {mockUserProfile.name}</p>
-                  <p><strong>Role:</strong> {mockUserProfile.role.toUpperCase()}</p>
-                  <p><strong>Facility:</strong> {mockUserProfile.location}</p>
+                  <p><strong>Author:</strong> {user?.name || 'Unknown'}</p>
+                  <p><strong>Role:</strong> {user?.role?.toUpperCase() || 'UNKNOWN'}</p>
+                  <p><strong>Facility:</strong> {user?.location || 'Unknown'}</p>
                 </div>
               </section>
             </div>

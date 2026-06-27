@@ -42,7 +42,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { mockPatients, mockUserProfile } from "@/lib/mock-data";
+import { mockPatients } from "@/lib/mock-data";
+import { getStoredUser, UserSession } from '@/lib/client-api';
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
@@ -65,6 +66,7 @@ function AssessContent() {
   const urlPatientId = searchParams.get('patientId');
 
   const [role, setRole] = useState<string>('chw');
+  const [user, setUser] = useState<UserSession | null>(null);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -104,8 +106,14 @@ function AssessContent() {
   );
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('demo_role') || 'chw';
-    setRole(savedRole);
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      setRole(storedUser.role);
+    } else {
+      const savedRole = localStorage.getItem('demo_role') || 'chw';
+      setRole(savedRole);
+    }
     setPatients(mockPatients);
 
     if (urlPatientId) {
@@ -411,8 +419,8 @@ function AssessContent() {
       },
       type: rec.urgencyLevel === 'EMERGENCY' ? 'Emergency' : 'Routine',
       discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
-      authorName: mockUserProfile.name,
-      authorRole: mockUserProfile.role.toUpperCase(),
+      authorName: user?.name || 'Unknown',
+      authorRole: user?.role?.toUpperCase() || 'UNKNOWN',
     };
 
     const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
@@ -526,9 +534,9 @@ function AssessContent() {
                   <p><strong>Justification:</strong> {overrideData.notes}</p>
                   <p className="text-xs text-muted-foreground">CHW override note captured for documentation.</p>
                   <div className="text-sm space-y-1 italic">
-                    <p><strong>Author:</strong> {mockUserProfile.name}</p>
-                    <p><strong>Role:</strong> {mockUserProfile.role.toUpperCase()}</p>
-                    <p><strong>Facility:</strong> {mockUserProfile.location}</p>
+                    <p><strong>Author:</strong> {user?.name || 'Unknown'}</p>
+                    <p><strong>Role:</strong> {user?.role?.toUpperCase() || 'UNKNOWN'}</p>
+                    <p><strong>Facility:</strong> {user?.location || 'Not specified'}</p>
                   </div>
                 </div>
               </section>

@@ -44,20 +44,15 @@ const tempDataFile = path.join(os.tmpdir(), 'aiea-db.json');
 
 const defaultUsers: StoredUser[] = [
   {
-    id: 'user-chw',
-    firstName: 'Demo',
-    lastName: 'Health Worker',
-    name: 'Demo Health Worker',
-    email: 'chw@demo.ai',
+    id: 'user-chw-minimal',
+    firstName: 'Amina',
+    lastName: 'Njoroge',
+    name: 'Amina Njoroge',
+    email: 'chw-minimal@demo.ai',
     password: 'demo123',
     role: 'chw',
-    imageUrl: mockUserProfile.imageUrl,
-    location: mockUserProfile.location,
-    phone: mockUserProfile.phone,
-    dob: mockUserProfile.dob,
-    gender: mockUserProfile.gender,
-    address: mockUserProfile.address,
-    allowLocation: mockUserProfile.allowLocation,
+    imageUrl: '',
+    location: '',
   },
   {
     id: 'user-clinician',
@@ -230,7 +225,7 @@ export async function clearSession(token: string): Promise<void> {
   await writeDb(db);
 }
 
-const demoUserIds = new Set(['user-chw', 'user-clinician', 'user-supervisor']);
+const demoUserIds = new Set(['user-chw-minimal', 'user-clinician', 'user-supervisor']);
 
 export async function getPatients(user?: StoredUser | null): Promise<Patient[]> {
   if (!user || !demoUserIds.has(user.id)) {

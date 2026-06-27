@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,18 +8,19 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { mockUserProfile } from '@/lib/mock-data';
+import { getStoredUser, UserSession } from '@/lib/client-api';
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const [user, setUser] = useState<UserSession | null>(null);
   const [formData, setFormData] = useState({
-    firstName: mockUserProfile.firstName || '',
-    surname: mockUserProfile.surname || '',
-    location: mockUserProfile.location || '',
-    county: mockUserProfile.county || '',
-    country: mockUserProfile.country || '',
+    firstName: '',
+    surname: '',
+    location: '',
+    county: '',
+    country: '',
   });
-  const [profileImage, setProfileImage] = useState(mockUserProfile.imageUrl);
+  const [profileImage, setProfileImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +50,22 @@ export default function EditProfilePage() {
       router.back();
     }, 1000);
   };
+
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      const [firstName, ...rest] = storedUser.name.split(' ');
+      setFormData({
+        firstName: firstName || '',
+        surname: rest.join(' ') || '',
+        location: storedUser.location || '',
+        county: '',
+        country: '',
+      });
+      setProfileImage(storedUser.imageUrl || '');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

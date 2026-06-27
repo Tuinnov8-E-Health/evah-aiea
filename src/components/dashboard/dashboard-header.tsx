@@ -36,26 +36,34 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "../theme-toggle";
 import Image from "next/image";
-import { mockNotifications, mockUserProfile } from "@/lib/mock-data";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
+import { mockNotifications } from '@/lib/mock-data';
+import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { getStoredUser } from '@/lib/client-api';
 
 export function DashboardHeader() {
   const pathname = usePathname();
   const [role, setRole] = useState('chw');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role');
-    if (savedRole) setRole(savedRole);
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setRole(storedUser.role);
+      setAvatarUrl(storedUser.imageUrl || '');
+    } else if (savedRole) {
+      setRole(savedRole);
+    }
   }, []);
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
-    { 
-      href: "/dashboard/assess", 
-      icon: role === 'clinician' ? ClipboardList : Brain, 
-      label: role === 'clinician' ? "Review" : "AI", 
-      roles: ['chw', 'clinician'] 
+    {
+      href: "/dashboard/assess",
+      icon: role === 'clinician' ? ClipboardList : Brain,
+      label: role === 'clinician' ? "Review" : "AI",
+      roles: ['chw', 'clinician']
     },
     { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
     { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
@@ -108,14 +116,14 @@ export function DashboardHeader() {
           className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
         />
       </div>
-       <ThemeToggle />
-       <DropdownMenu>
+      <ThemeToggle />
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
             </span>
             <span className="sr-only">Notifications</span>
           </Button>
@@ -125,51 +133,56 @@ export function DashboardHeader() {
           <DropdownMenuSeparator />
           {mockNotifications.slice(0, 3).map((notification) => (
             <DropdownMenuItem key={notification.id} asChild>
-                <Link href={notification.href} className="flex items-start gap-3">
-                    <notification.icon className="h-4 w-4 text-muted-foreground mt-1" />
-                    <div className="flex flex-col">
-                        <span>{notification.text}</span>
-                        <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
-                        </span>
-                    </div>
-                </Link>
+              <Link href={notification.href} className="flex items-start gap-3">
+                <notification.icon className="h-4 w-4 text-muted-foreground mt-1" />
+                <div className="flex flex-col">
+                  <span>{notification.text}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                  </span>
+                </div>
+              </Link>
             </DropdownMenuItem>
           ))}
-           <DropdownMenuSeparator />
-           <DropdownMenuItem asChild className="justify-center text-sm text-muted-foreground hover:text-primary">
-                <Link href="/dashboard/notifications">View all alerts</Link>
-           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild className="justify-center text-sm text-muted-foreground hover:text-primary">
+            <Link href="/dashboard/notifications">View all alerts</Link>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-            <Image
-              src={mockUserProfile.imageUrl}
-              width={36}
-              height={36}
-              alt="Avatar"
-              className="overflow-hidden rounded-full"
-              data-ai-hint={mockUserProfile.imageHint}
-            />
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                width={36}
+                height={36}
+                alt="Avatar"
+                className="overflow-hidden rounded-full"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <span className="text-xs font-bold">CH</span>
+              </div>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-              <Link href="/dashboard/profile">
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </Link>
+            <Link href="/dashboard/profile">
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-              <Link href="/login">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Link>
+            <Link href="/login">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

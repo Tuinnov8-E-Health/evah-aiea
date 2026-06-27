@@ -14,12 +14,13 @@ import {
   ChevronRight,
   Globe,
 } from "lucide-react";
-import { mockUserProfile } from "@/lib/mock-data";
+import { getStoredUser, UserSession } from '@/lib/client-api';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function AccountPage() {
   const router = useRouter();
+  const [user, setUser] = useState<UserSession | null>(null);
   const [role, setRole] = useState<string>('chw');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
@@ -27,9 +28,11 @@ export default function AccountPage() {
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    // Read the active demo role from the session
-    const savedRole = localStorage.getItem('demo_role');
-    if (savedRole) setRole(savedRole);
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+      setRole(storedUser.role);
+    }
 
     const savedSyncAt = localStorage.getItem('last_sync_at');
     if (savedSyncAt) setLastSyncAt(savedSyncAt);
@@ -116,11 +119,17 @@ export default function AccountPage() {
         {/* Profile Image with Verification Badge */}
         <div className="relative mb-4">
           <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-gray-200">
-            <img
-              src={mockUserProfile.imageUrl}
-              alt="Profile"
-              className="object-cover h-full w-full"
-            />
+            {user?.imageUrl ? (
+              <img
+                src={user.imageUrl}
+                alt="Profile"
+                className="object-cover h-full w-full"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-xl font-bold">
+                {user?.name?.split(' ').map((p) => p[0]).join('').slice(0, 2) || 'CH'}
+              </div>
+            )}
           </div>
           {/* Verification Badge */}
           <div className="absolute bottom-2 right-2 bg-accent rounded-full p-1.5">
@@ -130,7 +139,7 @@ export default function AccountPage() {
 
         {/* User Name and Role */}
         <h2 className="text-2xl font-semibold text-gray-900">
-          {mockUserProfile.name || "User"}
+          {user?.name || 'User'}
         </h2>
         <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mt-1">
           {role.toUpperCase()}

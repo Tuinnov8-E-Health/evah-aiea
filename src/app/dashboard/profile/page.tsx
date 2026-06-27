@@ -15,12 +15,13 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { mockUserProfile } from "@/lib/mock-data";
+import { getStoredUser, UserSession } from '@/lib/client-api';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function ProfilePage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [user, setUser] = useState<UserSession | null>(null);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
@@ -28,6 +29,11 @@ export default function ProfilePage() {
     // Set dark mode state based on current theme
     setIsDarkMode(theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser) setUser(storedUser);
+  }, []);
 
   const handleDarkModeToggle = (checked: boolean) => {
     setIsDarkMode(checked);
@@ -95,13 +101,18 @@ export default function ProfilePage() {
         {/* Profile Image with Verification Badge */}
         <div className="relative mb-4">
           <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-gray-200">
-            <Image
-              src={mockUserProfile.imageUrl}
-              alt="Profile"
-              fill
-              className="object-cover"
-              data-ai-hint={mockUserProfile.imageHint}
-            />
+            {user?.imageUrl ? (
+              <Image
+                src={user.imageUrl}
+                alt="Profile"
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-xl font-bold">
+                {user?.name?.split(' ').map((p) => p[0]).join('').slice(0, 2) || 'CH'}
+              </div>
+            )}
           </div>
           {/* Verification Badge */}
           <div className="absolute bottom-2 right-2 bg-accent rounded-full p-1.5">
@@ -111,7 +122,7 @@ export default function ProfilePage() {
 
         {/* User Name */}
         <h2 className="text-2xl font-semibold text-gray-900">
-          {mockUserProfile.surname || "User"}
+          {user?.name || 'User'}
         </h2>
       </div>
 
@@ -119,7 +130,7 @@ export default function ProfilePage() {
       <div className="px-4 py-2">
         {menuItems.map((item, index) => {
           const IconComponent = item.icon;
-          
+
           if (item.hasToggle) {
             return (
               <div
