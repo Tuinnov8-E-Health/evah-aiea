@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Brain, List, User, Activity, ClipboardList } from "lucide-react";
+import { Home, Brain, List, Activity, ClipboardList, FileText, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
@@ -20,9 +20,10 @@ export function MobileNav({ userRole }: MobileNavProps) {
       label: userRole === 'clinician' ? "Review" : "AI",
       roles: ['chw', 'clinician']
     },
+    { href: "/dashboard/reports", icon: Send, label: "Reports", roles: ['chw', 'clinician'] },
+    { href: "/dashboard/drafts", icon: FileText, label: "Drafts", roles: ['chw', 'clinician'] },
     { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
     { href: "/dashboard/records", icon: List, label: userRole === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/account", icon: User, label: "Account", roles: ['chw', 'clinician', 'supervisor'] },
   ];
 
   const navItems = baseItems.filter(item => !userRole || item.roles.includes(userRole));

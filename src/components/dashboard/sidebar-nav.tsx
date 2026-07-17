@@ -7,10 +7,11 @@ import {
   Home,
   Brain,
   History,
-  User,
   List,
   Activity as DataIcon,
-  ClipboardList
+  ClipboardList,
+  FileText,
+  Send
 } from "lucide-react";
 import {
   Tooltip,
@@ -34,12 +35,13 @@ export function SidebarNav() {
     {
       href: "/dashboard/assess",
       icon: role === 'clinician' ? ClipboardList : Brain,
-      label: role === 'clinician' ? "Review" : "AI Assistant",
+      label: role === 'clinician' ? "Review" : "AI",
       roles: ['chw', 'clinician']
     },
-    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Registry Management" : "Patient Registry", roles: ['chw', 'clinician', 'supervisor'] },
-    { href: "/dashboard/analytics", icon: DataIcon, label: "Safety Data", roles: ['supervisor'] },
-    { href: "/dashboard/account", icon: User, label: "My Profile", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/reports", icon: Send, label: "Reports", roles: ['chw', 'clinician'] },
+    { href: "/dashboard/drafts", icon: FileText, label: "Drafts", roles: ['chw', 'clinician'] },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/analytics", icon: DataIcon, label: "Data", roles: ['supervisor'] },
   ];
 
   const navItems = baseItems.filter(item => item.roles.includes(role));
