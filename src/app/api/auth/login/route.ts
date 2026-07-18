@@ -6,12 +6,12 @@ import { validateUser, createSession } from '@/lib/server/data-store';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = body;
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+    const { identifier, password } = body;
+    if (!identifier || !password) {
+      return NextResponse.json({ error: 'Phone number and password are required' }, { status: 400 });
     }
 
-    const user = await validateUser(email, password);
+    const user = await validateUser(identifier, password);
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }

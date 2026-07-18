@@ -67,10 +67,10 @@ async function apiFetch<T>(input: RequestInfo, init: RequestInit = {}): Promise<
   return data as T;
 }
 
-export async function login(email: string, password: string) {
+export async function login(identifier: string, password: string) {
   return apiFetch<{ token: string; user: UserSession }>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   });
 }
 

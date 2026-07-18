@@ -49,8 +49,9 @@ const defaultUsers: StoredUser[] = [
     lastName: 'Njoroge',
     name: 'Amina Njoroge',
     email: 'chw-minimal@demo.ai',
-    password: 'demo123',
+    password: 'ChangeMe123',
     role: 'chw',
+    phone: '+254700000001',
     imageUrl: '',
     location: '',
   },
@@ -60,11 +61,11 @@ const defaultUsers: StoredUser[] = [
     lastName: 'Mwangi',
     name: 'Dr. Sarah Mwangi',
     email: 'clinician@demo.ai',
-    password: 'demo123',
+    password: 'ChangeMe123',
     role: 'clinician',
     imageUrl: 'https://picsum.photos/seed/clinician/200/200',
     location: 'Regional Referral',
-    phone: '+254 700 111 222',
+    phone: '+254700000002',
     gender: 'female',
     address: { line1: 'Kigogo Hospital' },
     allowLocation: true,
@@ -75,11 +76,11 @@ const defaultUsers: StoredUser[] = [
     lastName: 'Supervisor',
     name: 'System Supervisor',
     email: 'supervisor@demo.ai',
-    password: 'demo123',
+    password: 'ChangeMe123',
     role: 'supervisor',
     imageUrl: 'https://picsum.photos/seed/supervisor/200/200',
     location: 'Ministry of Health',
-    phone: '+254 700 222 333',
+    phone: '+254700000003',
     gender: 'female',
     address: { line1: 'Ministry Offices' },
     allowLocation: true,
@@ -146,6 +147,11 @@ async function writeDb(db: DB): Promise<void> {
   }
 }
 
+export async function getUserByPhone(phone: string): Promise<StoredUser | undefined> {
+  const db = await readDb();
+  return db.users.find((user) => (user.phone || '').replace(/\s+/g, '').toLowerCase() === phone.replace(/\s+/g, '').toLowerCase());
+}
+
 export async function getUserByEmail(email: string): Promise<StoredUser | undefined> {
   const db = await readDb();
   return db.users.find((user) => user.email.toLowerCase() === email.toLowerCase());
@@ -156,8 +162,11 @@ export async function getUserById(id: string): Promise<StoredUser | undefined> {
   return db.users.find((user) => user.id === id);
 }
 
-export async function validateUser(email: string, password: string): Promise<StoredUser | null> {
-  const user = await getUserByEmail(email);
+export async function validateUser(identifier: string, password: string): Promise<StoredUser | null> {
+  const normalizedIdentifier = identifier.trim();
+  const byPhone = await getUserByPhone(normalizedIdentifier);
+  const byEmail = await getUserByEmail(normalizedIdentifier);
+  const user = byPhone || byEmail;
   if (!user || user.password !== password) return null;
   return user;
 }

@@ -22,8 +22,8 @@ export default function ClinicianLoginPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [password, setPassword] = useState('ChangeMe123');
     const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -31,7 +31,7 @@ export default function ClinicianLoginPage() {
         setLoading(true);
 
         try {
-            const response = await login(email, password);
+            const response = await login(phoneNumber, password);
             saveSession(response.token, response.user);
             toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
             window.location.href = '/clinician/dashboard';
@@ -85,14 +85,20 @@ export default function ClinicianLoginPage() {
                     <CardContent className="px-0 space-y-4 mt-4">
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email Address</Label>
+                                <Label htmlFor="phone">Phone Number</Label>
                                 <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="name@example.ai"
+                                    id="phone"
+                                    type="tel"
+                                    placeholder="+254700000002"
                                     className="h-12 text-lg"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    value={phoneNumber}
+                                    onChange={(e) => {
+                                        const nextPhone = e.target.value;
+                                        setPhoneNumber(nextPhone);
+                                        if (nextPhone.trim()) {
+                                            setPassword('ChangeMe123');
+                                        }
+                                    }}
                                     required
                                 />
                             </div>
