@@ -9,8 +9,7 @@ import { ArrowLeft, MessageSquare, Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { mockEncounters, mockPatients } from '@/lib/mock-data';
 import { Encounter } from '@/lib/types';
-
-const STORAGE_KEY = 'session_encounters';
+import { mergeStoredEncounters, writeStoredEncounters } from '@/lib/encounter-storage';
 
 type ReportItem = Encounter & {
     viewed?: boolean;
@@ -23,29 +22,26 @@ export default function ReportsPage() {
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
     useEffect(() => {
-        const savedReports = localStorage.getItem(STORAGE_KEY);
-        if (savedReports) {
-            const parsed: ReportItem[] = JSON.parse(savedReports).map((report: any) => ({
-                ...report,
-                viewed: report.viewed ?? false,
-                viewerNotes: report.viewerNotes ?? ''
-            }));
-            setReports(parsed.reverse());
-            return;
-        }
-
         const demoReports: ReportItem[] = mockEncounters.map((encounter) => ({
             ...encounter,
             viewed: false,
             viewerNotes: ''
-        })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        }));
 
-        setReports(demoReports);
+        const combinedReports = mergeStoredEncounters<ReportItem>(demoReports);
+        const parsed = combinedReports.map((report: ReportItem) => ({
+            ...report,
+            viewed: report.viewed ?? false,
+            viewerNotes: report.viewerNotes ?? ''
+        }));
+
+        setReports(parsed);
     }, []);
 
     const saveReports = (nextReports: ReportItem[]) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextReports.reverse()));
-        setReports(nextReports);
+        const orderedReports = [...nextReports].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        writeStoredEncounters(orderedReports);
+        setReports(orderedReports);
     };
 
     const handleView = (report: ReportItem) => {
@@ -84,15 +80,25 @@ export default function ReportsPage() {
             return acc;
         }, new Map<string, { patientId: string; reports: ReportItem[] }>());
 
-        return Array.from(groups.values()).map((group) => {
-            const sorted = group.reports.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            return {
-                patientId: group.patientId,
-                reports: sorted,
-                latestReport: sorted[0],
-                unviewedCount: sorted.filter((report) => !report.viewed).length,
-            };
-        }).sort((a, b) => new Date(b.latestReport.date).getTime() - new Date(a.latestReport.date).getTime());
+        return mockPatients
+            .map((patient) => {
+                const group = groups.get(patient.id);
+                const sorted = (group?.reports ?? []).slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                return {
+                    patientId: patient.id,
+                    patient,
+                    reports: sorted,
+                    latestReport: sorted[0] ?? null,
+                    unviewedCount: sorted.filter((report) => !report.viewed).length,
+                    hasReport: sorted.length > 0,
+                };
+            })
+            .sort((a, b) => {
+                if (!a.latestReport && !b.latestReport) return a.patient.name.localeCompare(b.patient.name);
+                if (!a.latestReport) return 1;
+                if (!b.latestReport) return -1;
+                return new Date(b.latestReport.date).getTime() - new Date(a.latestReport.date).getTime();
+            });
     }, [reports]);
 
     const selectedReport = reports.find((report) => report.id === selectedReportId);
@@ -169,25 +175,30 @@ export default function ReportsPage() {
 
                             <section className="space-y-3">
                                 <h3 className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Clinical Assessment</h3>
-                                <p className="text-sm text-slate-700">{selectedReport.summary}</p>
+                                <p className="text-sm text-slate-700">{selectedReport.summary?.trim() ? selectedReport.summary : 'Clinical assessment has not been done.'}</p>
                                 <div className="grid gap-4 sm:grid-cols-[1fr_1fr]">
                                     <div className="rounded-2xl bg-muted/10 p-4">
                                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Recommendation</p>
-                                        <p className="text-sm text-slate-700">{selectedReport.recommendation.action}</p>
+                                        <p className="text-sm text-slate-700">{selectedReport.recommendation.action?.trim() ? selectedReport.recommendation.action : 'Recommendation has not been done.'}</p>
                                     </div>
                                     <div className="rounded-2xl bg-muted/10 p-4">
                                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Urgency Level</p>
-                                        <p className="text-sm text-slate-700">{selectedReport.recommendation.urgencyLevel}</p>
+                                        <p className="text-sm text-slate-700">{selectedReport.recommendation.urgencyLevel?.trim() ? selectedReport.recommendation.urgencyLevel : 'Urgency assessment has not been done.'}</p>
                                     </div>
                                 </div>
                             </section>
 
-                            {selectedReport.recommendation.followUpPlan ? (
+                            {selectedReport.recommendation.followUpPlan?.trim() ? (
                                 <section className="rounded-2xl bg-muted/10 p-4">
                                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Follow-up Plan</p>
                                     <p className="text-sm text-slate-700">{selectedReport.recommendation.followUpPlan}</p>
                                 </section>
-                            ) : null}
+                            ) : (
+                                <section className="rounded-2xl bg-muted/10 p-4">
+                                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Follow-up Plan</p>
+                                    <p className="text-sm text-slate-700">Follow-up plan has not been done.</p>
+                                </section>
+                            )}
 
                             {selectedReport.redFlags?.length ? (
                                 <section className="rounded-2xl bg-red-100 border border-red-200 p-4">
@@ -198,7 +209,12 @@ export default function ReportsPage() {
                                         ))}
                                     </ul>
                                 </section>
-                            ) : null}
+                            ) : (
+                                <section className="rounded-2xl bg-muted/10 p-4">
+                                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Red Flags</p>
+                                    <p className="text-sm text-slate-700">Red flags have not been documented.</p>
+                                </section>
+                            )}
 
                             <section className="rounded-2xl bg-muted/10 p-4">
                                 <div className="flex items-center justify-between gap-4">
@@ -210,7 +226,7 @@ export default function ReportsPage() {
                                 {selectedReport.viewerNotes ? (
                                     <p className="mt-3 text-sm text-slate-700 whitespace-pre-wrap">{selectedReport.viewerNotes}</p>
                                 ) : (
-                                    <p className="mt-3 text-sm text-muted-foreground">No clinician notes have been added to this report yet.</p>
+                                    <p className="mt-3 text-sm text-muted-foreground">Clinician notes have not been done.</p>
                                 )}
                             </section>
 
@@ -229,30 +245,40 @@ export default function ReportsPage() {
                         <CardContent className="p-0 min-w-0">
                             {patientHistoryGroups.map((group) => {
                                 const latest = group.latestReport;
-                                const patient = mockPatients.find((p) => p.id === group.patientId);
+                                const patient = group.patient;
                                 return (
                                     <button
                                         key={group.patientId}
                                         type="button"
                                         className="w-full max-w-full min-w-0 border-b border-border/60 bg-background px-4 py-4 text-left transition hover:bg-muted/30 last:border-b-0"
-                                        onClick={() => handleView(latest)}
+                                        onClick={() => {
+                                            if (latest) {
+                                                handleView(latest);
+                                            } else {
+                                                router.push(`/dashboard/new-encounter?patientId=${group.patientId}`);
+                                            }
+                                        }}
                                     >
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
                                             <div className="min-w-0 space-y-1">
                                                 <p className="text-sm font-semibold text-primary truncate">
                                                     {patient?.name || `Case #${group.patientId.slice(-6)}`}
                                                 </p>
-                                                <p className="text-sm text-muted-foreground truncate">{latest.summary}</p>
+                                                <p className="text-sm text-muted-foreground truncate">
+                                                    {latest ? latest.summary : `${patient?.status || 'Stable'} patient profile ready for a new encounter.`}
+                                                </p>
                                             </div>
 
                                             <div className="flex flex-col items-start gap-2 text-left sm:items-end sm:text-right min-w-0 max-w-full">
-                                                <span className="text-sm font-medium text-slate-700 truncate">{format(new Date(latest.date), 'PPP p')}</span>
+                                                <span className="text-sm font-medium text-slate-700 truncate">
+                                                    {latest ? format(new Date(latest.date), 'PPP p') : 'No report yet'}
+                                                </span>
                                                 <div className="flex flex-wrap items-center gap-2 max-w-full">
-                                                    <Badge variant={group.unviewedCount > 0 ? 'destructive' : 'secondary'} className="text-[10px] uppercase py-1 px-2">
-                                                        {group.unviewedCount > 0 ? 'Not viewed' : 'Viewed'}
+                                                    <Badge variant={latest && group.unviewedCount > 0 ? 'destructive' : 'secondary'} className="text-[10px] uppercase py-1 px-2">
+                                                        {latest ? (group.unviewedCount > 0 ? 'Not viewed' : 'Viewed') : 'New patient'}
                                                     </Badge>
                                                     <Badge variant="outline" className="text-[10px] uppercase py-1 px-2">
-                                                        {group.reports.length} updates
+                                                        {group.reports.length > 0 ? `${group.reports.length} updates` : 'No report'}
                                                     </Badge>
                                                 </div>
                                             </div>

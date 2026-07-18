@@ -47,8 +47,7 @@ import { getStoredUser, UserSession } from '@/lib/client-api';
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
-import { Encounter } from "@/lib/types";
-
+import { Encounter } from "@/lib/types"; import { appendStoredEncounter } from '@/lib/encounter-storage';
 type Message = {
   id: string;
   role: 'user' | 'ai';
@@ -423,8 +422,7 @@ function AssessContent() {
       authorRole: user?.role?.toUpperCase() || 'UNKNOWN',
     };
 
-    const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
-    localStorage.setItem('session_encounters', JSON.stringify([...existingLogs, newEncounter]));
+    appendStoredEncounter(newEncounter);
   };
 
   const handleSubmitReport = () => {

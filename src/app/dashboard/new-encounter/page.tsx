@@ -49,6 +49,7 @@ import { usePrint } from '@/hooks/usePrint';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Encounter } from '@/lib/types';
+import { appendStoredEncounter } from '@/lib/encounter-storage';
 
 type Step = 'consent' | 'patient' | 'infectious' | 'classify' | 'seizure_details' | 'symptoms' | 'adherence' | 'review' | 'assessment' | 'report' | 'final';
 
@@ -236,8 +237,7 @@ function NewEncounterContent() {
       isClinicianUpdated: user?.role === 'clinician'
     };
 
-    const existingLogs = JSON.parse(localStorage.getItem('session_encounters') || '[]');
-    localStorage.setItem('session_encounters', JSON.stringify([...existingLogs, newEncounter]));
+    appendStoredEncounter(newEncounter);
   };
 
   const runAssessment = () => {

@@ -71,15 +71,12 @@ export default function DashboardLayout({
       {/* Desktop Sidebar */}
       <SidebarNav />
 
-      <div className="flex flex-1 flex-col md:pl-14">
+      <div className="flex flex-1 flex-col md:pl-44">
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-accent font-bold text-xs leading-none">AI</span>
-            </div>
             <div className="flex flex-col">
-              <span className="font-headline font-bold text-primary leading-tight text-sm">AIEA Assistant</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+              <span className="text-sm font-semibold text-foreground">{userName}</span>
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                 {role.toUpperCase()}
               </span>
             </div>

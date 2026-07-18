@@ -39,6 +39,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Encounter } from '@/lib/types';
+import { readStoredEncounters, writeStoredEncounters } from '@/lib/encounter-storage';
 
 const formatSafeDate = (dateValue: any, formatStr: string = 'PPP p') => {
   if (!dateValue) return 'N/A';
@@ -60,10 +61,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
   const [sessionEncounters, setSessionEncounters] = useState<Encounter[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('session_encounters');
-    if (saved) {
-      setSessionEncounters(JSON.parse(saved));
-    }
+    setSessionEncounters(readStoredEncounters());
   }, []);
 
   const role = typeof window !== 'undefined' ? localStorage.getItem('demo_role') : 'chw';
@@ -122,7 +120,7 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
 
       const newSession = [...sessionEncounters, updatedEncounter];
       setSessionEncounters(newSession);
-      localStorage.setItem('session_encounters', JSON.stringify(newSession));
+      writeStoredEncounters(newSession);
     }
 
     toast({ title: "Clinical Update Saved", description: "Assessment updated with specialist clinical oversight notes." });

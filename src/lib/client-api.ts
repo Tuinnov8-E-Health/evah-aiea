@@ -10,6 +10,10 @@ export type UserSession = {
   role: string;
   imageUrl: string;
   location: string;
+  facilityCode?: string;
+  county?: string;
+  specialty?: string;
+  phoneNumber?: string;
 };
 
 export function getToken(): string | null {

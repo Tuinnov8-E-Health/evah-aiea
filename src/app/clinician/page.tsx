@@ -46,12 +46,16 @@ export default function ClinicianLoginPage() {
         setLoading(true);
 
         const demoUser = {
-            id: 'clinician-demo',
-            name: 'Dr. Sarah Mwangi',
+            id: 'u-clin-1',
+            name: 'Dr. Antony Ngemu',
             email: 'clinician-demo@demo.ai',
             role: 'clinician',
             imageUrl: '',
-            location: 'National Referral',
+            location: 'Nairobi',
+            facilityCode: '13077',
+            county: 'Nairobi',
+            specialty: 'Clinical Review / Neurology Support',
+            phoneNumber: '+254700000002',
         };
 
         try {
@@ -76,7 +80,7 @@ export default function ClinicianLoginPage() {
                 <Card className="border-none shadow-none bg-transparent">
                     <CardHeader className="px-0 text-center">
                         <CardTitle className="text-3xl font-headline font-bold text-primary">Clinician Login</CardTitle>
-                        <CardDescription className="text-lg">Sign in with your clinician account to access the clinician dashboard.</CardDescription>
+                        <CardDescription className="text-lg">Review CHW encounters, inspect AI review prompts, and certify next steps for the care pathway.</CardDescription>
                     </CardHeader>
                     <CardContent className="px-0 space-y-4 mt-4">
                         <form onSubmit={handleLogin} className="space-y-4">
@@ -124,7 +128,7 @@ export default function ClinicianLoginPage() {
                         <div className="pt-6 border-t mt-6">
                             <p className="text-xs font-bold uppercase text-muted-foreground mb-3 text-center tracking-widest">Demo Clinician Account</p>
                             <Button variant="outline" size="sm" className="w-full h-14 text-[10px] font-bold" onClick={handleDemoLogin} disabled={loading}>
-                                <Shield className="h-4 w-4 mr-2" /> Clinician Demo Login
+                                <Shield className="h-4 w-4 mr-2" /> Dr. Antony Ngemu — Clinician Demo Login
                             </Button>
                         </div>
                     </CardContent>
