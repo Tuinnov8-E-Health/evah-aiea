@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getStoredUser } from '@/lib/client-api';
 import { PageLoader } from '@/components/ui/loader';
@@ -17,53 +17,46 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 
-export default function ClinicianDashboardPage() {
+function ClinicianDashboardContent({
+    reports,
+    selectedReport,
+    setSelectedReport,
+    showReportDialog,
+    setShowReportDialog,
+    profile,
+}: {
+    reports: any[];
+    selectedReport: any | null;
+    setSelectedReport: (report: any | null) => void;
+    showReportDialog: boolean;
+    setShowReportDialog: (value: boolean) => void;
+    profile: {
+        name: string;
+        role: string;
+        facilityCode: string;
+        county: string;
+        specialty: string;
+    };
+}) {
+    const pathname = usePathname();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const [loading, setLoading] = useState(true);
-    const [reports, setReports] = useState<any[]>([]);
-    const [selectedReport, setSelectedReport] = useState<any | null>(null);
-    const [showReportDialog, setShowReportDialog] = useState(false);
-    const [profile, setProfile] = useState({
-        name: 'Dr. Antony Ngemu',
-        role: 'Clinician',
-        facilityCode: '13077',
-        county: 'Nairobi',
-        specialty: 'Clinical Review / Neurology Support',
-    });
-
-    const activeView = searchParams.get('view') === 'my-reports'
-        ? 'my-reports'
-        : searchParams.get('view') === 'new-reports'
-            ? 'new-reports'
-            : searchParams.get('view') === 'patients'
-                ? 'patients'
-                : 'home';
+    const [activeView, setActiveView] = useState('home');
+    const [patientId, setPatientId] = useState<string | null>(null);
 
     useEffect(() => {
-        const sessionUser = getStoredUser();
-        if (!sessionUser || sessionUser.role !== 'clinician') {
-            router.push('/clinician');
-            return;
-        }
-
-        setProfile({
-            name: sessionUser.name || 'Dr. Antony Ngemu',
-            role: 'Clinician',
-            facilityCode: sessionUser.facilityCode || '13077',
-            county: sessionUser.county || sessionUser.location || 'Nairobi',
-            specialty: sessionUser.specialty || 'Clinical Review / Neurology Support',
-        });
-        const seededReports = mockEncounters.map((encounter) => ({ ...encounter, viewed: false, viewerNotes: '' }));
-        setReports(mergeStoredEncounters(seededReports));
-        setLoading(false);
-    }, [router]);
-
-    if (loading) {
-        return <PageLoader />;
-    }
-
-    const patientId = searchParams.get('patientId');
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view');
+        setActiveView(
+            view === 'my-reports'
+                ? 'my-reports'
+                : view === 'new-reports'
+                    ? 'new-reports'
+                    : view === 'patients'
+                        ? 'patients'
+                        : 'home'
+        );
+        setPatientId(params.get('patientId'));
+    }, [pathname]);
     const chwSubmittedReports = reports.filter((encounter) => encounter.authorRole?.toUpperCase() === 'CHW' || encounter.authorRole?.toLowerCase() === 'chw');
     const reviewedReports = chwSubmittedReports.slice(0, 2);
     const reviewedPatients = mockPatients.map((patient) => ({
@@ -202,87 +195,83 @@ export default function ClinicianDashboardPage() {
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-                        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                            <DialogHeader>
-                                <DialogTitle className="text-left text-primary">{selectedPatientName}</DialogTitle>
-                                <DialogDescription className="text-left">
-                                    {selectedReport?.id} • CHW submitted encounter report
-                                </DialogDescription>
-                            </DialogHeader>
-
-                            {selectedReport && (
-                                <div className="space-y-4">
-                                    <div className="rounded-2xl border bg-muted/20 p-4">
-                                        <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Clinical summary</p>
-                                        <p className="mt-2 text-sm text-foreground">{selectedReport.summary?.trim() ? selectedReport.summary : 'Clinical assessment has not been done.'}</p>
-                                    </div>
-
-                                    <div className="grid gap-3 md:grid-cols-2">
-                                        <div className="rounded-2xl border bg-card/60 p-4">
-                                            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Recommendation</p>
-                                            <p className="mt-2 text-sm font-semibold text-foreground">{selectedReport.recommendation.action?.trim() ? selectedReport.recommendation.action : 'Recommendation has not been done.'}</p>
-                                            <p className="mt-2 text-sm text-muted-foreground">{selectedReport.recommendation.followUpPlan?.trim() ? selectedReport.recommendation.followUpPlan : 'Follow-up plan has not been done.'}</p>
-                                        </div>
-                                        <div className="rounded-2xl border bg-card/60 p-4">
-                                            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Safety advice</p>
-                                            <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-muted-foreground">
-                                                {selectedReport.recommendation.safetyAdvice?.filter((item: string) => item?.trim()).length ? (
-                                                    selectedReport.recommendation.safetyAdvice.map((item: string, index: number) => (
-                                                        <li key={`${item}-${index}`}>{item}</li>
-                                                    ))
-                                                ) : (
-                                                    <li>Safety advice has not been done.</li>
-                                                )}
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    {selectedReport.redFlags?.length ? (
-                                        <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-                                            <p className="text-[10px] uppercase tracking-[0.25em] text-red-700">Red flags</p>
-                                            <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-red-900">
-                                                {selectedReport.redFlags.map((flag: string, index: number) => (
-                                                    <li key={`${flag}-${index}`}>{flag}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ) : (
-                                        <div className="rounded-2xl border border-dashed border-muted/60 bg-muted/10 p-4">
-                                            <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Red flags</p>
-                                            <p className="mt-2 text-sm text-muted-foreground">Red flags have not been documented.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </DialogContent>
-                    </Dialog>
                 </>
-            ) : (
-                <Card className="border border-border/60">
-                    <CardHeader>
-                        <CardTitle>{activeView === 'my-reports' ? 'Reviewed reports' : 'CHW submitted reports'}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {(activeView === 'my-reports' ? reviewedReports : chwSubmittedReports).map((report) => (
-                                <div key={report.id} className="rounded-xl border bg-card/60 p-4">
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="font-semibold text-foreground">{report.id} • {mockPatients.find((patient) => patient.id === report.patientId)?.name || 'Patient'}</p>
-                                            <p className="text-sm text-muted-foreground">{report.summary}</p>
-                                        </div>
-                                        <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                                            {report.recommendation.urgencyLevel}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+            ) : null}
+
+            {showReportDialog && selectedReport ? (
+                <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Report summary</DialogTitle>
+                            <DialogDescription>{selectedPatientName}</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-sm font-semibold text-foreground">Summary</p>
+                                <p className="text-sm text-muted-foreground mt-1">{selectedReport.summary}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-foreground">Urgency</p>
+                                <p className="text-sm text-muted-foreground mt-1">{selectedReport.recommendation.urgencyLevel}</p>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <Button variant="secondary" onClick={() => setShowReportDialog(false)}>Close</Button>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                    </DialogContent>
+                </Dialog>
+            ) : null}
         </div>
+    );
+}
+
+export default function ClinicianDashboardPage() {
+    const [loading, setLoading] = useState(true);
+    const [reports, setReports] = useState<any[]>([]);
+    const [selectedReport, setSelectedReport] = useState<any | null>(null);
+    const [showReportDialog, setShowReportDialog] = useState(false);
+    const [profile, setProfile] = useState({
+        name: 'Dr. Antony Ngemu',
+        role: 'Clinician',
+        facilityCode: '13077',
+        county: 'Nairobi',
+        specialty: 'Clinical Review / Neurology Support',
+    });
+    const router = useRouter();
+
+    useEffect(() => {
+        const sessionUser = getStoredUser();
+        if (!sessionUser || sessionUser.role !== 'clinician') {
+            router.push('/clinician');
+            return;
+        }
+
+        setProfile({
+            name: sessionUser.name || 'Dr. Antony Ngemu',
+            role: 'Clinician',
+            facilityCode: sessionUser.facilityCode || '13077',
+            county: sessionUser.county || sessionUser.location || 'Nairobi',
+            specialty: sessionUser.specialty || 'Clinical Review / Neurology Support',
+        });
+        const seededReports = mockEncounters.map((encounter) => ({ ...encounter, viewed: false, viewerNotes: '' }));
+        setReports(mergeStoredEncounters(seededReports));
+        setLoading(false);
+    }, [router]);
+
+    if (loading) {
+        return <PageLoader />;
+    }
+
+    return (
+        <Suspense fallback={<PageLoader />}>
+            <ClinicianDashboardContent
+                reports={reports}
+                selectedReport={selectedReport}
+                setSelectedReport={setSelectedReport}
+                showReportDialog={showReportDialog}
+                setShowReportDialog={setShowReportDialog}
+                profile={profile}
+            />
+        </Suspense>
     );
 }

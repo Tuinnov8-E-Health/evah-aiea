@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Bell, ClipboardList, FileText, Home, Menu, User, BarChart3, Users, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/loader';
@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 export default function ClinicianDashboardLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const [activeView, setActiveView] = useState('home');
     const [profile, setProfile] = useState({
         name: 'Dr. Antony Ngemu',
         role: 'Clinician',
@@ -27,13 +27,19 @@ export default function ClinicianDashboardLayout({ children }: { children: React
         county: 'Nairobi',
     });
 
-    const activeView = searchParams.get('view') === 'my-reports'
-        ? 'my-reports'
-        : searchParams.get('view') === 'new-reports'
-            ? 'new-reports'
-            : searchParams.get('view') === 'patients'
-                ? 'patients'
-                : 'home';
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view');
+        setActiveView(
+            view === 'my-reports'
+                ? 'my-reports'
+                : view === 'new-reports'
+                    ? 'new-reports'
+                    : view === 'patients'
+                        ? 'patients'
+                        : 'home'
+        );
+    }, [pathname]);
 
     useEffect(() => {
         const savedUser = getStoredUser();
