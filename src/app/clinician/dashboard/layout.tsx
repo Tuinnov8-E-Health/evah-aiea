@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Bell, ClipboardList, FileText, Home, Menu, User, BarChart3, Users, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageLoader } from '@/components/ui/loader';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -157,7 +158,11 @@ export default function ClinicianDashboardLayout({ children }: { children: React
                     </header>
 
                     <main className="flex-1 p-4 md:p-6">
-                        <div className="mx-auto max-w-6xl">{children}</div>
+                        <div className="mx-auto max-w-6xl">
+                            <Suspense fallback={<PageLoader />}>
+                                {children}
+                            </Suspense>
+                        </div>
                     </main>
                 </div>
             </div>
