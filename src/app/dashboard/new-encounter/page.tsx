@@ -35,7 +35,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
 import { Recommendation, ClinicalInput } from '@/lib/clinical-engine/types';
-import { getStoredUser, UserSession } from '@/lib/client-api';
+import { createEncounter, getStoredUser, UserSession } from '@/lib/client-api';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Encounter } from '@/lib/types';
 import { appendStoredEncounter } from '@/lib/encounter-storage';
+import { queueEncounter } from '@/lib/offline-queue';
 
 type Step = 'consent' | 'patient' | 'infectious' | 'classify' | 'seizure_details' | 'symptoms' | 'adherence' | 'review' | 'assessment' | 'report' | 'final';
 
@@ -216,7 +217,7 @@ function NewEncounterContent() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const saveEncounterToHistory = (rec: Recommendation, isOverride: boolean = false) => {
+  const saveEncounterToHistory = async (rec: Recommendation, isOverride: boolean = false) => {
     const newEncounter: Encounter = {
       id: `e-${Date.now()}`,
       patientId: formData.existingPatientId || 'new-patient',
@@ -238,6 +239,17 @@ function NewEncounterContent() {
     };
 
     appendStoredEncounter(newEncounter);
+
+    const { id: _clientGeneratedId, ...encounterPayload } = newEncounter;
+    try {
+      await createEncounter(encounterPayload);
+    } catch {
+      try {
+        await queueEncounter(encounterPayload as Encounter);
+      } catch {
+        // The existing local-storage save remains available if queue storage fails.
+      }
+    }
   };
 
   const runAssessment = () => {
@@ -291,13 +303,13 @@ function NewEncounterContent() {
     setReportSubmitted(false);
   };
 
-  const handleSubmitReport = () => {
+  const handleSubmitReport = async () => {
     if (!recommendation) {
       toast({ variant: 'destructive', title: 'No Recommendation' });
       return;
     }
     const isOverride = Boolean(overrideData.reason);
-    saveEncounterToHistory(recommendation, isOverride);
+    await saveEncounterToHistory(recommendation, isOverride);
     setReportSubmitted(true);
   };
 

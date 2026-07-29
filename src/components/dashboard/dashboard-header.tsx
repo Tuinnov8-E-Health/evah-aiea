@@ -40,11 +40,13 @@ import { mockNotifications } from '@/lib/mock-data';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getStoredUser } from '@/lib/client-api';
+import { useOfflineQueue } from '@/hooks/use-offline-queue';
 
 export function DashboardHeader() {
   const pathname = usePathname();
   const [role, setRole] = useState('chw');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const { pendingCount } = useOfflineQueue();
 
   useEffect(() => {
     const savedRole = localStorage.getItem('demo_role');
@@ -116,6 +118,11 @@ export function DashboardHeader() {
           className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
         />
       </div>
+      {pendingCount > 0 && (
+        <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+          {pendingCount} pending sync{pendingCount === 1 ? '' : 's'}
+        </span>
+      )}
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

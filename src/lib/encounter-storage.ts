@@ -39,8 +39,12 @@ export function appendStoredEncounter<T extends StoredEncounter = StoredEncounte
     return writeStoredEncounters(nextEncounters);
 }
 
-export function mergeStoredEncounters<T extends StoredEncounter = StoredEncounter>(seedEncounters: T[], storedEncounters: T[] = readStoredEncounters<T>()): T[] {
-    const combined = [...seedEncounters, ...storedEncounters];
+export function mergeStoredEncounters<T extends StoredEncounter = StoredEncounter>(
+    seedEncounters: T[],
+    storedEncounters: T[] = readStoredEncounters<T>(),
+    serverEncounters: T[] = []
+): T[] {
+    const combined = [...seedEncounters, ...storedEncounters, ...serverEncounters];
     const ordered = Array.from(
         combined.reduce((map, encounter) => {
             if (encounter.id) {

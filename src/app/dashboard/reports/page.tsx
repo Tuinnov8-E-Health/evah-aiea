@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MessageSquare, Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { mockEncounters, mockPatients } from '@/lib/mock-data';
+import { fetchEncounters } from '@/lib/client-api';
 import { Encounter } from '@/lib/types';
 import { mergeStoredEncounters, writeStoredEncounters } from '@/lib/encounter-storage';
 
@@ -28,14 +29,31 @@ export default function ReportsPage() {
             viewerNotes: ''
         }));
 
-        const combinedReports = mergeStoredEncounters<ReportItem>(demoReports);
-        const parsed = combinedReports.map((report: ReportItem) => ({
-            ...report,
-            viewed: report.viewed ?? false,
-            viewerNotes: report.viewerNotes ?? ''
-        }));
+        const loadReports = async () => {
+            let serverReports: ReportItem[] = [];
 
-        setReports(parsed);
+            try {
+                const response = await fetchEncounters();
+                serverReports = (response?.encounters ?? []).map((encounter: Encounter) => ({
+                    ...encounter,
+                    viewed: false,
+                    viewerNotes: ''
+                }));
+            } catch {
+                serverReports = [];
+            }
+
+            const combinedReports = mergeStoredEncounters<ReportItem>(demoReports, undefined, serverReports);
+            const parsed = combinedReports.map((report: ReportItem) => ({
+                ...report,
+                viewed: report.viewed ?? false,
+                viewerNotes: report.viewerNotes ?? ''
+            }));
+
+            setReports(parsed);
+        };
+
+        void loadReports();
     }, []);
 
     const saveReports = (nextReports: ReportItem[]) => {

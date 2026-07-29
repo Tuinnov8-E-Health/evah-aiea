@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getStoredUser } from '@/lib/client-api';
+import { fetchEncounters, getStoredUser } from '@/lib/client-api';
 import { PageLoader } from '@/components/ui/loader';
 import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Users } from 'lucide-react';
 import { mockEncounters, mockPatients } from '@/lib/mock-data';
@@ -246,16 +246,34 @@ export default function ClinicianDashboardPage() {
             return;
         }
 
-        setProfile({
-            name: sessionUser.name || 'Dr. Antony Ngemu',
-            role: 'Clinician',
-            facilityCode: sessionUser.facilityCode || '13077',
-            county: sessionUser.county || sessionUser.location || 'Nairobi',
-            specialty: sessionUser.specialty || 'Clinical Review / Neurology Support',
-        });
-        const seededReports = mockEncounters.map((encounter) => ({ ...encounter, viewed: false, viewerNotes: '' }));
-        setReports(mergeStoredEncounters(seededReports));
-        setLoading(false);
+        const loadReports = async () => {
+            setProfile({
+                name: sessionUser.name || 'Dr. Antony Ngemu',
+                role: 'Clinician',
+                facilityCode: sessionUser.facilityCode || '13077',
+                county: sessionUser.county || sessionUser.location || 'Nairobi',
+                specialty: sessionUser.specialty || 'Clinical Review / Neurology Support',
+            });
+
+            const seededReports = mockEncounters.map((encounter) => ({ ...encounter, viewed: false, viewerNotes: '' }));
+            let serverReports: any[] = [];
+
+            try {
+                const response = await fetchEncounters();
+                serverReports = (response?.encounters ?? []).map((encounter: any) => ({
+                    ...encounter,
+                    viewed: false,
+                    viewerNotes: ''
+                }));
+            } catch {
+                serverReports = [];
+            }
+
+            setReports(mergeStoredEncounters(seededReports, undefined, serverReports));
+            setLoading(false);
+        };
+
+        void loadReports();
     }, [router]);
 
     if (loading) {

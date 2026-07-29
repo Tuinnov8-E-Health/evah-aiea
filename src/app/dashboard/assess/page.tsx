@@ -43,11 +43,12 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { mockPatients } from "@/lib/mock-data";
-import { getStoredUser, UserSession } from '@/lib/client-api';
+import { createEncounter, getStoredUser, UserSession } from '@/lib/client-api';
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
 import { Encounter } from "@/lib/types"; import { appendStoredEncounter } from '@/lib/encounter-storage';
+import { queueEncounter } from '@/lib/offline-queue';
 type Message = {
   id: string;
   role: 'user' | 'ai';
@@ -400,7 +401,7 @@ function AssessContent() {
     toast({ title: "Override Applied", description: "The report now includes your clinical override details." });
   };
 
-  const saveEncounterToHistory = (rec: Recommendation, isOverride: boolean = false) => {
+  const saveEncounterToHistory = async (rec: Recommendation, isOverride: boolean = false) => {
     if (!selectedPatientId) return;
 
     const newEncounter: Encounter = {
@@ -423,16 +424,27 @@ function AssessContent() {
     };
 
     appendStoredEncounter(newEncounter);
+
+    const { id: _clientGeneratedId, ...encounterPayload } = newEncounter;
+    try {
+      await createEncounter(encounterPayload);
+    } catch {
+      try {
+        await queueEncounter(encounterPayload as Encounter);
+      } catch {
+        // The existing local-storage save remains available if queue storage fails.
+      }
+    }
   };
 
-  const handleSubmitReport = () => {
+  const handleSubmitReport = async () => {
     if (!activeRecommendation) {
       toast({ variant: 'destructive', title: 'Submit Failed', description: 'No recommendation is available to submit.' });
       return;
     }
 
     const isOverride = Boolean(overrideData.reason);
-    saveEncounterToHistory(activeRecommendation, isOverride);
+    await saveEncounterToHistory(activeRecommendation, isOverride);
     setReportSubmitted(true);
     toast({ title: 'Report Submitted', description: 'The final report is ready for PDF download.' });
   };

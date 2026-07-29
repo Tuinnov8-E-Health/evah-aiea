@@ -5,6 +5,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SyncListeners } from '@/components/sync-listeners';
 
 const fontPoppins = Poppins({
   subsets: ['latin'],
@@ -71,6 +72,7 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <SyncListeners />
           <div className="min-h-screen flex flex-col">
             {children}
           </div>
