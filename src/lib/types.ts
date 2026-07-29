@@ -49,32 +49,33 @@ export type Encounter = {
   };
   type: 'Initial' | 'Routine' | 'Emergency';
   discordanceNote?: string;
+  authorId: string;
   authorName: string;
   authorRole: string;
   isClinicianUpdated?: boolean;
 };
 
 export type UserProfile = {
-    firstName?: string;
-    surname?: string;
-    name: string;
-    role: string;
-    email: string;
-    imageUrl: string;
-    location: string;
-    phone?: string;
-    dob?: string;
-    gender?: string;
-    address?: any;
-    allowLocation?: boolean;
-    imageHint?: string;
+  firstName?: string;
+  surname?: string;
+  name: string;
+  role: string;
+  email: string;
+  imageUrl: string;
+  location: string;
+  phone?: string;
+  dob?: string;
+  gender?: string;
+  address?: any;
+  allowLocation?: boolean;
+  imageHint?: string;
 };
 
 export type Notification = {
-    id: string;
-    icon: LucideIcon;
-    text: string;
-    href: string;
-    timestamp: string;
-    read: boolean;
+  id: string;
+  icon: LucideIcon;
+  text: string;
+  href: string;
+  timestamp: string;
+  read: boolean;
 };

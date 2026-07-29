@@ -220,6 +220,7 @@ function NewEncounterContent() {
   const saveEncounterToHistory = async (rec: Recommendation, isOverride: boolean = false) => {
     const newEncounter: Encounter = {
       id: `e-${Date.now()}`,
+      status: 'finished',
       patientId: formData.existingPatientId || 'new-patient',
       date: new Date().toISOString(),
       summary: `Comprehensive encounter: ${formData.firstName} ${formData.surname}. Seizure duration: ${formData.seizureDuration}, Fever: ${formData.feverPresent ? 'Yes' : 'No'}, Medication adherence: ${formData.missedDoses} missed doses.`,
@@ -233,6 +234,7 @@ function NewEncounterContent() {
       },
       type: rec.urgencyLevel === 'EMERGENCY' ? 'Emergency' : 'Routine',
       discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
+      authorId: user?.id || 'unknown-user',
       authorName: user?.name || 'Unknown',
       authorRole: user?.role?.toUpperCase() || 'UNKNOWN',
       isClinicianUpdated: user?.role === 'clinician'

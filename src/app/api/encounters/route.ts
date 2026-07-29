@@ -1,6 +1,7 @@
 'use server';
 
 import { NextResponse } from 'next/server';
+import type { Encounter } from '@/lib/types';
 import { getEncounters, addEncounter, getUserByToken } from '@/lib/server/data-store';
 
 export async function GET(req: Request) {
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
   }
 
   const patientId = new URL(req.url).searchParams.get('patientId') || undefined;
-  const encounters = await getEncounters(patientId || undefined);
+  const encounters = await getEncounters(user, patientId || undefined);
   return NextResponse.json({ encounters });
 }
 
@@ -34,14 +35,20 @@ export async function POST(req: Request) {
 
   try {
     const payload = await req.json();
-    const requiredFields = ['patientId', 'date', 'summary', 'recommendation', 'type', 'authorName', 'authorRole'];
+    const requiredFields = ['patientId', 'date', 'summary', 'recommendation', 'type'];
     for (const field of requiredFields) {
       if (!(field in payload)) {
         return NextResponse.json({ error: `Missing field: ${field}` }, { status: 400 });
       }
     }
 
-    const encounter = await addEncounter(payload);
+    const { authorName: _authorName, authorRole: _authorRole, ...clientPayload } = payload;
+    const sanitizedPayload = {
+      ...clientPayload,
+      authorName: user.name,
+      authorRole: user.role,
+    } as Omit<Encounter, 'id'>;
+    const encounter = await addEncounter(sanitizedPayload, user);
     return NextResponse.json({ encounter });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to save encounter' }, { status: 500 });

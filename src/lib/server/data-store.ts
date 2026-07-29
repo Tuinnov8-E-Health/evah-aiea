@@ -249,21 +249,30 @@ export async function getPatientById(id: string): Promise<Patient | undefined> {
   return db.patients.find((patient) => patient.id === id);
 }
 
-export async function getEncounters(patientId?: string): Promise<Encounter[]> {
+export async function getEncounters(user?: StoredUser | null, patientId?: string): Promise<Encounter[]> {
   const db = await readDb();
   const encounters = db.encounters.map((encounter) => ({
     ...encounter,
     patientId: (encounter as any).patientId || encounter.subject,
     subject: (encounter as any).patientId || encounter.subject,
   }));
+
+  if (user?.role === 'chw') {
+    const authoredEncounters = encounters.filter((encounter) => encounter.authorId === user.id);
+    return patientId ? authoredEncounters.filter((encounter) => encounter.patientId === patientId) : authoredEncounters;
+  }
+
   return patientId ? encounters.filter((encounter) => encounter.patientId === patientId) : encounters;
 }
 
-export async function addEncounter(payload: Omit<Encounter, 'id'>): Promise<Encounter> {
+export async function addEncounter(payload: Omit<Encounter, 'id'>, user: StoredUser): Promise<Encounter> {
   const db = await readDb();
   const newEncounter: Encounter = {
     ...payload,
     id: `e-${crypto.randomUUID()}`,
+    authorId: user.id,
+    authorName: user.name,
+    authorRole: user.role,
     patientId: payload.patientId || payload.subject,
     subject: payload.patientId || payload.subject,
   } as Encounter;

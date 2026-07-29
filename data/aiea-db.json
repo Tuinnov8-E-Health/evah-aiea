@@ -165,6 +165,7 @@
         ]
       },
       "type": "Emergency",
+      "authorId": "user-chw-minimal",
       "authorName": "Alex Mutua",
       "authorRole": "CHW",
       "patientId": "p1"

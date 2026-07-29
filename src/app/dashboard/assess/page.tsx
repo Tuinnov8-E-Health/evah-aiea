@@ -406,6 +406,7 @@ function AssessContent() {
 
     const newEncounter: Encounter = {
       id: `e-${Date.now()}`,
+      status: 'finished',
       patientId: selectedPatientId,
       date: new Date().toISOString(),
       summary: isOverride ? overrideData.notes : `Conversational AI Analysis: ${messages.filter(m => m.role === 'user').pop()?.content}`,
@@ -419,6 +420,7 @@ function AssessContent() {
       },
       type: rec.urgencyLevel === 'EMERGENCY' ? 'Emergency' : 'Routine',
       discordanceNote: isOverride ? `${overrideData.reason}: ${overrideData.notes}` : undefined,
+      authorId: user?.id || 'unknown-user',
       authorName: user?.name || 'Unknown',
       authorRole: user?.role?.toUpperCase() || 'UNKNOWN',
     };

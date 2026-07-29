@@ -111,6 +111,7 @@ export const mockEncounters: Encounter[] = [
       safetyAdvice: ['Avoid cooking over open fires alone.']
     },
     type: 'Emergency',
+    authorId: 'user-chw-minimal',
     authorName: 'Alex Mutua',
     authorRole: 'CHW'
   },
@@ -130,6 +131,7 @@ export const mockEncounters: Encounter[] = [
       safetyAdvice: ['Encourage the patient to rest and stay hydrated.']
     },
     type: 'Routine',
+    authorId: 'user-chw-minimal',
     authorName: 'Alex Mutua',
     authorRole: 'CHW'
   },
@@ -149,6 +151,7 @@ export const mockEncounters: Encounter[] = [
       safetyAdvice: ['Avoid heavy lifting and stay near family support.']
     },
     type: 'Routine',
+    authorId: 'user-chw-minimal',
     authorName: 'Grace Achieng',
     authorRole: 'CHW'
   },
@@ -168,6 +171,7 @@ export const mockEncounters: Encounter[] = [
       safetyAdvice: ['Ensure safe sleeping environment and avoid unsupervised bathing.']
     },
     type: 'Routine',
+    authorId: 'user-chw-minimal',
     authorName: 'Alex Mutua',
     authorRole: 'CHW'
   },
@@ -187,6 +191,7 @@ export const mockEncounters: Encounter[] = [
       safetyAdvice: ['Keep a record of any breakthrough events.']
     },
     type: 'Routine',
+    authorId: 'user-chw-minimal',
     authorName: 'Grace Achieng',
     authorRole: 'CHW'
   },
@@ -207,6 +212,7 @@ export const mockEncounters: Encounter[] = [
       safetyAdvice: ['Monitor for drowsiness and avoid driving.']
     },
     type: 'Routine',
+    authorId: 'user-chw-minimal',
     authorName: 'Grace Achieng',
     authorRole: 'CHW'
   },

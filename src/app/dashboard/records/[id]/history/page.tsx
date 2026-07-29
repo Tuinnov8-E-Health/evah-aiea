@@ -110,8 +110,10 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
       const updatedEncounter: Encounter = {
         ...selectedEncounter,
         id: `rev-${Date.now()}`,
+        status: 'finished',
         date: new Date().toISOString(),
         summary: `Specialist Update: ${overrideNotes}`,
+        authorId: selectedEncounter.authorId || 'unknown-user',
         authorName: 'Dr. Specialist',
         authorRole: 'CLINICIAN',
         isClinicianUpdated: true,
