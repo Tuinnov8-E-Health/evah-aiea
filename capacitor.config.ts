@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   server: {
     // IMPORTANT: set this to your live Vercel deployment URL before building
     // native apps. Example: "https://your-app.vercel.app"
-    url: "https://REPLACE_WITH_VERCEL_URL",
+    url: "https://epireg-aiea.vercel.app",
   },
   android: {
     // Use https scheme for deep links / asset loading
