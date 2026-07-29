@@ -50,3 +50,23 @@ build/
 dist/
 firebase/
 *.log
+.idea/
+.vscode/.history/
+# Capacitor native folders - ignore build artifacts, not the native projects
+# Android build artifacts
+/android/app/build
+/android/.gradle
+/android/local.properties
+
+# iOS build artifacts
+/ios/App/Pods
+/ios/App/build
+/ios/App/DerivedData
+/ios/App/App.xcworkspace/xcuserdata
+
+# Common Gradle/Xcode build patterns
+**/build/
+**/bin/
+**/obj/
+*.ipa
+*.app
