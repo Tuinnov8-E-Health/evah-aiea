@@ -251,6 +251,45 @@ export async function getPatientById(id: string): Promise<Patient | undefined> {
   return db.patients.find((patient) => patient.id === id);
 }
 
+export async function getEncounterAnalytics() {
+  const db = await readDb();
+  const encounters = db.encounters.map((encounter) => ({
+    ...encounter,
+    patientId: (encounter as any).patientId || encounter.subject,
+    subject: (encounter as any).patientId || encounter.subject,
+  }));
+
+  const urgencyLevelCounts = new Map<string, number>();
+  const typeCounts = new Map<string, number>();
+  const countyCounts = new Map<string, number>();
+
+  for (const encounter of encounters) {
+    const urgencyLabel = encounter.recommendation?.urgencyLevel?.trim() || 'Unknown';
+    urgencyLevelCounts.set(urgencyLabel, (urgencyLevelCounts.get(urgencyLabel) || 0) + 1);
+
+    const typeLabel = encounter.type?.trim() || 'Unknown';
+    typeCounts.set(typeLabel, (typeCounts.get(typeLabel) || 0) + 1);
+
+    const patient = db.patients.find((candidate) => candidate.id === encounter.patientId);
+    const patientRegionValue = patient?.address?.city || patient?.address?.district;
+    const countyLabel = patientRegionValue?.trim() || 'Unknown';
+    countyCounts.set(countyLabel, (countyCounts.get(countyLabel) || 0) + 1);
+  }
+
+  return {
+    totalCount: encounters.length,
+    urgencyLevelCounts: Array.from(urgencyLevelCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+    typeCounts: Array.from(typeCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+    countyCounts: Array.from(countyCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  };
+}
+
 export async function getEncounters(user?: StoredUser | null, patientId?: string): Promise<Encounter[]> {
   const db = await readDb();
   const encounters = db.encounters.map((encounter) => ({
