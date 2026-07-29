@@ -20,6 +20,7 @@ type StoredUser = {
   gender?: string;
   address?: any;
   allowLocation?: boolean;
+  county?: string;
 };
 
 type Session = {
@@ -69,6 +70,7 @@ const defaultUsers: StoredUser[] = [
     gender: 'female',
     address: { line1: 'Kigogo Hospital' },
     allowLocation: true,
+    county: 'Local',
   },
   {
     id: 'user-supervisor',
@@ -260,6 +262,26 @@ export async function getEncounters(user?: StoredUser | null, patientId?: string
   if (user?.role === 'chw') {
     const authoredEncounters = encounters.filter((encounter) => encounter.authorId === user.id);
     return patientId ? authoredEncounters.filter((encounter) => encounter.patientId === patientId) : authoredEncounters;
+  }
+
+  if (user?.role === 'clinician') {
+    const normalizedCounty = user.county?.trim().toLowerCase();
+    if (!normalizedCounty) {
+      return [];
+    }
+
+    const clinicianMatches: Encounter[] = [];
+    for (const encounter of encounters) {
+      const patient = await getPatientById(encounter.patientId);
+      const patientRegionValue = patient?.address?.city || patient?.address?.district;
+      const normalizedPatientRegion = patientRegionValue?.trim().toLowerCase();
+
+      if (normalizedPatientRegion && normalizedPatientRegion === normalizedCounty) {
+        clinicianMatches.push(encounter);
+      }
+    }
+
+    return patientId ? clinicianMatches.filter((encounter) => encounter.patientId === patientId) : clinicianMatches;
   }
 
   return patientId ? encounters.filter((encounter) => encounter.patientId === patientId) : encounters;
