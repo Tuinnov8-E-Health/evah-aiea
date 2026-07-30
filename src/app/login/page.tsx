@@ -23,7 +23,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('ChangeMe123');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -32,7 +32,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await login(phoneNumber, password);
+      const response = await login(identifier, password);
       saveSession(response.token, response.user);
       toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
       window.location.href = '/dashboard';
@@ -86,17 +86,17 @@ export default function LoginPage() {
           <CardContent className="px-0 space-y-4 mt-4">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">Phone Number or Email</Label>
                 <Input
                   id="phone"
-                  type="tel"
-                  placeholder="+254700000001"
+                  type="text"
+                  placeholder="Phone or email"
                   className="h-12 text-lg"
-                  value={phoneNumber}
+                  value={identifier}
                   onChange={(e) => {
-                    const nextPhone = e.target.value;
-                    setPhoneNumber(nextPhone);
-                    if (nextPhone.trim()) {
+                    const nextIdentifier = e.target.value;
+                    setIdentifier(nextIdentifier);
+                    if (nextIdentifier.trim()) {
                       setPassword('ChangeMe123');
                     }
                   }}

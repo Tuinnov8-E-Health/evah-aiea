@@ -18,6 +18,9 @@
 /.next/
 /out/
 
+# Serwist
+/public/sw*
+
 # production
 /build
 
