@@ -7,7 +7,6 @@ import { Suspense, useEffect, useState } from 'react';
 import { PageLoader } from '@/components/ui/loader';
 import { Bell, User, LogOut, Menu } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,14 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getMe, clearSession, getStoredUser } from '@/lib/client-api';
+import { ApiError, getMe, clearSession, getStoredUser } from '@/lib/client-api';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('chw');
   const [userName, setUserName] = useState('Care Team');
@@ -34,28 +32,28 @@ export default function DashboardLayout({
     const demoMode = typeof window !== 'undefined' && localStorage.getItem('is_demo') === 'true';
 
     if (!sessionUser) {
-      router.push('/login');
+      window.location.href = '/login';
       return;
     }
 
-    if (demoMode) {
-      setRole(sessionUser.role);
-      setUserName(sessionUser.name);
-      setLoading(false);
-      return;
-    }
+    setRole(sessionUser.role);
+    setUserName(sessionUser.name);
+    setLoading(false);
+
+    if (demoMode) return;
 
     getMe()
       .then((result) => {
         setRole(result.user.role);
         setUserName(result.user.name);
-        setLoading(false);
       })
-      .catch(() => {
-        clearSession();
-        router.push('/login');
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 401) {
+          clearSession();
+          window.location.href = '/login';
+        }
       });
-  }, [router]);
+  }, []);
 
   if (loading) {
     return <PageLoader />;
@@ -63,7 +61,7 @@ export default function DashboardLayout({
 
   const handleLogout = () => {
     clearSession();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   return (

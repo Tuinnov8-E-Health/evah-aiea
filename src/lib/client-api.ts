@@ -2,6 +2,14 @@ import type { Patient, Encounter } from '@/lib/types';
 
 const TOKEN_KEY = 'aiea_auth_token';
 const USER_KEY = 'aiea_auth_user';
+const REQUEST_TIMEOUT_MS = 10_000;
+
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 export type UserSession = {
   id: string;
@@ -56,15 +64,32 @@ async function apiFetch<T>(input: RequestInfo, init: RequestInit = {}): Promise<
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(input, { ...init, headers, credentials: 'same-origin' });
-  const data = await res.json().catch(() => null);
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!res.ok) {
-    const error = data?.error || res.statusText || 'Request failed';
-    throw new Error(error);
+  try {
+    const res = await fetch(input, {
+      ...init,
+      headers,
+      credentials: 'same-origin',
+      signal: controller.signal,
+    });
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      const error = data?.error || res.statusText || 'Request failed';
+      throw new ApiError(error, res.status);
+    }
+
+    return data as T;
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error('Request timed out');
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-
-  return data as T;
 }
 
 export async function login(identifier: string, password: string) {
