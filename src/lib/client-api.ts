@@ -183,6 +183,20 @@ export async function logout() {
   }
 }
 
+export async function forgotPassword(email: string) {
+  return apiFetch('/auth/password/reset/', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(uidb64: string, token: string, newPassword: string) {
+  return apiFetch('/auth/password/reset/confirm/', {
+    method: 'POST',
+    body: JSON.stringify({ uidb64, token, new_password: newPassword }),
+  });
+}
+
 
 export async function register(payload: {
   firstName: string;

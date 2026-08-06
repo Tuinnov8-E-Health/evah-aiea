@@ -74,3 +74,6 @@ firebase/
 **/obj/
 *.ipa
 *.app
+
+## Env
+.env.local
