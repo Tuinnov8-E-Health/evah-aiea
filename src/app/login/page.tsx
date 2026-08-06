@@ -35,7 +35,7 @@ export default function LoginPage() {
       const response = await login(identifier, password);
       saveSession(response.access_token, response.refresh_token, response.user);
       toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Login Failed', description: error?.message || 'Unable to authenticate.' });
     } finally {

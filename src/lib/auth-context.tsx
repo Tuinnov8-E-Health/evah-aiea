@@ -72,12 +72,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return allowedRoles.includes(user.role);
   };
 
-  // Route guarding
+  // Re-read auth state whenever pathname changes (catches post-login navigation)
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    const storedToken = getToken();
+    if (storedUser && storedToken) {
+      setUser(storedUser);
+      setToken(storedToken);
+    } else {
+      setUser(null);
+      setToken(null);
+    }
+    setLoading(false);
+  }, [pathname]);
+
+  // Route guarding — runs after auth state is resolved
   useEffect(() => {
     if (loading) return;
 
     const publicPaths = ['/login', '/register', '/terms-of-service', '/'];
-    const isPublicPath = publicPaths.includes(pathname);
+    const isPublicPath = publicPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
     const isAuthenticated = !!token;
 
     if (!isAuthenticated && !isPublicPath) {

@@ -15,7 +15,30 @@ export type UserSession = {
   county?: string;
   specialty?: string;
   phoneNumber?: string;
+  firstName?: string;
+  lastName?: string;
 };
+
+/** Normalize the backend user payload into our frontend UserSession shape. */
+export function mapBackendUser(u: Record<string, any>): UserSession {
+  const firstName = u.firstName || u.first_name || '';
+  const lastName = u.lastName || u.last_name || '';
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || u.email || 'User';
+  return {
+    id: String(u.id),
+    name: fullName,
+    email: u.email || '',
+    role: u.role || 'chw',
+    imageUrl: u.avatar || u.imageUrl || '',
+    location: u.locationLabel || u.location || u.county || '',
+    county: u.county,
+    specialty: u.specialty,
+    phoneNumber: u.phone || u.phoneNumber,
+    facilityCode: u.facility?.code || u.facilityCode,
+    firstName,
+    lastName,
+  };
+}
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -139,10 +162,15 @@ async function apiFetch<T>(input: string, init: RequestInit = {}): Promise<T> {
 }
 
 export async function login(identifier: string, password: string) {
-  return apiFetch<{ access_token: string; refresh_token: string; user: UserSession }>('/auth/login/', {
+  const res = await apiFetch<Record<string, any>>('/auth/login/', {
     method: 'POST',
-    body: JSON.stringify({ email: identifier, password }), // Backend expects email
+    body: JSON.stringify({ email: identifier, password }),
   });
+  // Backend returns both 'access_token' and 'token' (compat alias)
+  const accessToken: string = res.access_token || res.token;
+  const refreshToken: string | null = res.refresh_token || null;
+  const user = mapBackendUser(res.user);
+  return { access_token: accessToken, refresh_token: refreshToken, user };
 }
 
 export async function logout() {
@@ -170,9 +198,10 @@ export async function register(payload: {
 }
 
 export async function getMe() {
-  return apiFetch<{ user: UserSession }>('/auth/me/', {
-    method: 'GET',
-  });
+  const raw = await apiFetch<Record<string, any>>('/auth/me/', { method: 'GET' });
+  // MeView returns the flat user object directly (no 'user' wrapper)
+  const user = mapBackendUser(raw.user ?? raw);
+  return { user };
 }
 
 export async function fetchPatients() {
