@@ -26,6 +26,8 @@ export const metadata: Metadata = {
     'Helping community health workers manage epilepsy in remote areas with AI-guided tools.',
 };
 
+import { AuthProvider } from '@/lib/auth-context';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -73,12 +75,14 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <SyncListeners />
-          <SerwistProvider>
-            <div className="min-h-screen flex flex-col">
-              {children}
-            </div>
-          </SerwistProvider>
+          <AuthProvider>
+            <SyncListeners />
+            <SerwistProvider>
+              <div className="min-h-screen flex flex-col">
+                {children}
+              </div>
+            </SerwistProvider>
+          </AuthProvider>
         </ThemeProvider>
         <Toaster />
       </body>

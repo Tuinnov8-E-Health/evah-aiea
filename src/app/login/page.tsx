@@ -33,40 +33,11 @@ export default function LoginPage() {
 
     try {
       const response = await login(identifier, password);
-      saveSession(response.token, response.user);
+      saveSession(response.access_token, response.refresh_token, response.user);
       toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
       window.location.href = '/dashboard';
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Login Failed', description: error?.message || 'Unable to authenticate.' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (role: string) => {
-    setLoading(true);
-
-    const demoUsers: Record<string, { id: string; name: string; email: string; role: string; imageUrl: string; location: string }> = {
-      'chw-minimal': {
-        id: 'user-chw-minimal',
-        name: 'Amina Njoroge',
-        email: 'chw-minimal@demo.ai',
-        role: 'chw',
-        imageUrl: '',
-        location: '',
-      },
-    };
-
-    try {
-      const demoUser = demoUsers[role];
-      if (!demoUser) throw new Error('Invalid demo role');
-      saveSession(`demo-token-${demoUser.id}`, demoUser);
-      localStorage.setItem('demo_role', demoUser.role);
-      localStorage.setItem('is_demo', 'true');
-      toast({ title: 'Demo Login', description: `Logged in as ${role.toUpperCase()}` });
-      window.location.href = '/dashboard';
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Demo Login Failed', description: error?.message || 'Unable to authenticate demo user.' });
     } finally {
       setLoading(false);
     }
@@ -93,13 +64,7 @@ export default function LoginPage() {
                   placeholder="Phone or email"
                   className="h-12 text-lg"
                   value={identifier}
-                  onChange={(e) => {
-                    const nextIdentifier = e.target.value;
-                    setIdentifier(nextIdentifier);
-                    if (nextIdentifier.trim()) {
-                      setPassword('ChangeMe123');
-                    }
-                  }}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
               </div>
@@ -131,15 +96,6 @@ export default function LoginPage() {
                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Log In'}
               </Button>
             </form>
-
-            <div className="pt-6 border-t mt-6">
-              <p className="text-xs font-bold uppercase text-muted-foreground mb-3 text-center tracking-widest">Demo Account</p>
-              <div className="grid grid-cols-1 gap-2">
-                <Button variant="outline" size="sm" className="text-[10px] h-14 flex flex-col gap-1" onClick={() => handleDemoLogin('chw-minimal')}>
-                  <UserCheck className="h-4 w-4 text-blue-600" /> CHW Minimal
-                </Button>
-              </div>
-            </div>
           </CardContent>
           <CardFooter className="px-0 flex flex-col gap-6 mt-6">
             <div className="text-center text-sm text-muted-foreground font-medium">

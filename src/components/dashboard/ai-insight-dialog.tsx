@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { analyzeClinicalHistory } from "@/ai/flows/analyze-clinical-history";
+import { analyzeClinicalHistory } from "@/lib/client-api";
 import { Bot, Loader2 } from "lucide-react";
 
 interface AiInsightDialogProps {

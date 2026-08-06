@@ -61,7 +61,7 @@ export default function RegisterPage() {
         password: formData.password,
         role: formData.role,
       });
-      saveSession(response.token, response.user);
+      saveSession(response.access_token, response.refresh_token, response.user);
       toast({ title: 'Welcome!', description: 'Account created successfully.' });
       router.push('/dashboard');
     } catch (error: any) {

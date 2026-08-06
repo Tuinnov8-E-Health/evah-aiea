@@ -29,38 +29,31 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fetchPatients, fetchRegistry, getStoredUser } from '@/lib/client-api';
+import { useAuth } from '@/lib/auth-context';
 import { mockPatients } from '@/lib/mock-data';
 import { differenceInDays, parseISO, isValid, differenceInYears } from "date-fns";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [role, setRole] = useState<string>('chw');
   const [userName, setUserName] = useState<string>('Care Team');
   const [patients, setPatients] = useState<any[]>([]);
   const [registry, setRegistry] = useState<{ clinicians: any[]; chws: any[]; facilities: any[] } | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
-    const sessionUser = getStoredUser();
-    if (sessionUser) {
-      setRole(sessionUser.role);
-      setUserName(sessionUser.name.split(' ')[0] || sessionUser.name);
+    if (user) {
+      setRole(user.role);
+      setUserName(user.name.split(' ')[0] || user.name);
     }
 
-    const demoMode = localStorage.getItem('is_demo') === 'true';
-    setIsDemo(demoMode);
-
-    if (demoMode) {
-      setPatients(mockPatients);
-    } else {
-      fetchPatients()
-        .then((result) => setPatients(result.patients))
-        .catch(() => setPatients([]));
-    }
+    fetchPatients()
+      .then((result) => setPatients(result.patients))
+      .catch(() => setPatients([]));
 
     fetchRegistry()
       .then((result) => setRegistry(result.registry))
       .catch(() => setRegistry(null));
-  }, []);
+  }, [user]);
 
   const isSupervisor = role === 'supervisor';
   const isClinician = role === 'clinician';
