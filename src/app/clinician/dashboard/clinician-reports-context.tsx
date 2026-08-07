@@ -1,13 +1,13 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { fetchEncounters, getStoredUser } from '@/lib/client-api';
 import { mergeStoredEncounters } from '@/lib/encounter-storage';
 import { mockEncounters, mockPatients } from '@/lib/mock-data';
 import type { Encounter } from '@/lib/types';
-import type { UserSession } from '@/lib/client-api';
 
-type ClinicianReportsContextValue = {
+export type ClinicianReportsContextValue = {
     loading: boolean;
     user: UserSession | null;
     reports: Encounter[];
@@ -17,6 +17,8 @@ type ClinicianReportsContextValue = {
     newReportsCount: number;
     myReportsCount: number;
     urgentFlagsCount: number;
+    activeView: 'home' | 'new-reports' | 'patients' | 'my-reports';
+    patientId: string | null;
     updateReport: (encounterId: string, updates: Partial<Encounter>) => void;
 };
 
@@ -30,6 +32,16 @@ function normalizeReviewStatus(report: Encounter) {
 }
 
 export function ClinicianReportsProvider({ children }: { children: ReactNode }) {
+    const searchParams = useSearchParams();
+    const activeView = searchParams.get('view') === 'my-reports'
+        ? 'my-reports'
+        : searchParams.get('view') === 'new-reports'
+            ? 'new-reports'
+            : searchParams.get('view') === 'patients'
+                ? 'patients'
+                : 'home';
+    const patientId = searchParams.get('patientId');
+
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<UserSession | null>(null);
     const [reports, setReports] = useState<Encounter[]>([]);
@@ -103,9 +115,11 @@ export function ClinicianReportsProvider({ children }: { children: ReactNode }) 
             newReportsCount: newReports.length,
             myReportsCount: myReports.length,
             urgentFlagsCount,
+            activeView,
+            patientId,
             updateReport,
         }),
-        [loading, user, normalizedReports, newReports, myReports, urgentFlagsCount]
+        [loading, user, normalizedReports, newReports, myReports, urgentFlagsCount, activeView, patientId]
     );
 
     return <ClinicianReportsContext.Provider value={value}>{children}</ClinicianReportsContext.Provider>;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/loader';
@@ -23,31 +23,13 @@ function formatAge(birthDate: string) {
 }
 
 export default function ClinicianDashboardPage() {
-    const { loading, reports, patients, newReports, myReports, updateReport } = useClinicianReportsContext();
+    const { loading, reports, patients, newReports, myReports, updateReport, activeView, patientId } = useClinicianReportsContext();
     const [selectedReport, setSelectedReport] = useState<any | null>(null);
     const [showReportDialog, setShowReportDialog] = useState(false);
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [activeView, setActiveView] = useState('home');
-    const [patientId, setPatientId] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
-    const pathname = usePathname();
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const view = params.get('view');
-        setActiveView(
-            view === 'my-reports'
-                ? 'my-reports'
-                : view === 'new-reports'
-                    ? 'new-reports'
-                    : view === 'patients'
-                        ? 'patients'
-                        : 'home'
-        );
-        setPatientId(params.get('patientId'));
-    }, [pathname]);
 
     const patientsWithReports = useMemo(
         () => patients

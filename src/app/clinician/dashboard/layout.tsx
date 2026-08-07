@@ -4,7 +4,6 @@
 
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { Bell, ClipboardList, FileText, Home, Menu, User, BarChart3, Users, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/loader';
@@ -21,29 +20,13 @@ import { cn } from '@/lib/utils';
 import { ClinicianReportsProvider, useClinicianReportsContext } from './clinician-reports-context';
 
 function ClinicianDashboardLayoutContent({ children }: { children: ReactNode }) {
-    const pathname = usePathname();
-    const [activeView, setActiveView] = useState('home');
     const [profile, setProfile] = useState({
         name: 'Dr. Antony Ngemu',
         role: 'Clinician',
         facilityCode: '13077',
         county: 'Nairobi',
     });
-    const { newReportsCount, myReportsCount, urgentFlagsCount } = useClinicianReportsContext();
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const view = params.get('view');
-        setActiveView(
-            view === 'my-reports'
-                ? 'my-reports'
-                : view === 'new-reports'
-                    ? 'new-reports'
-                    : view === 'patients'
-                        ? 'patients'
-                        : 'home'
-        );
-    }, [pathname]);
+    const { activeView, newReportsCount, myReportsCount, urgentFlagsCount } = useClinicianReportsContext();
 
     useEffect(() => {
         const savedUser = getStoredUser();
@@ -182,8 +165,10 @@ function ClinicianDashboardLayoutContent({ children }: { children: ReactNode }) 
 
 export default function ClinicianDashboardLayout({ children }: { children: ReactNode }) {
     return (
-        <ClinicianReportsProvider>
-            <ClinicianDashboardLayoutContent>{children}</ClinicianDashboardLayoutContent>
-        </ClinicianReportsProvider>
+        <Suspense fallback={<PageLoader />}>
+            <ClinicianReportsProvider>
+                <ClinicianDashboardLayoutContent>{children}</ClinicianDashboardLayoutContent>
+            </ClinicianReportsProvider>
+        </Suspense>
     );
 }
