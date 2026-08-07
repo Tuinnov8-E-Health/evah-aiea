@@ -17,12 +17,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Key, UserCheck, Shield, Eye, EyeOff } from 'lucide-react';
-import { login, saveSession } from '@/lib/client-api';
+import { login, saveSession, clearSession } from '@/lib/client-api';
+import { LoginMethodToggle } from '@/components/login-method-toggle';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('ChangeMe123');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +35,15 @@ export default function LoginPage() {
 
     try {
       const response = await login(identifier, password);
+      if (response.user.role === 'clinician') {
+        clearSession();
+        toast({
+          title: 'Use the Clinician portal',
+          description: 'Please sign in from the Clinician portal to access your review workspace',
+        });
+        window.location.href = '/clinician';
+        return;
+      }
       saveSession(response.token, response.user);
       toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
       window.location.href = '/dashboard';
@@ -86,11 +97,14 @@ export default function LoginPage() {
           <CardContent className="px-0 space-y-4 mt-4">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number or Email</Label>
+                <LoginMethodToggle value={loginMethod} onChange={setLoginMethod} />
+                <Label htmlFor="identifier">{loginMethod === 'phone' ? 'Phone Number' : 'Email Address'}</Label>
                 <Input
-                  id="phone"
-                  type="text"
-                  placeholder="Phone or email"
+                  id="identifier"
+                  type={loginMethod === 'phone' ? 'tel' : 'email'}
+                  inputMode={loginMethod === 'phone' ? 'tel' : 'email'}
+                  autoComplete={loginMethod === 'phone' ? 'tel' : 'email'}
+                  placeholder={loginMethod === 'phone' ? '+254700000000' : 'you@example.com'}
                   className="h-12 text-lg"
                   value={identifier}
                   onChange={(e) => {

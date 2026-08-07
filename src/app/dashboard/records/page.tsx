@@ -56,7 +56,6 @@ export default function RecordsPage() {
   }, []);
 
   const isSupervisor = role === 'supervisor';
-  const isClinician = role === 'clinician';
 
   const patients = mockPatients;
   const clinicians = mockClinicians;

@@ -2,15 +2,37 @@ ext {
     minSdkVersion = 24
     compileSdkVersion = 36
     targetSdkVersion = 36
-    androidxActivityVersion = '1.11.0'
-    androidxAppCompatVersion = '1.7.1'
-    androidxCoordinatorLayoutVersion = '1.3.0'
-    androidxCoreVersion = '1.17.0'
-    androidxFragmentVersion = '1.8.9'
-    coreSplashScreenVersion = '1.2.0'
-    androidxWebkitVersion = '1.14.0'
+    
+    // Core & Activity
+    androidxActivityVersion = '1.10.1'
+    androidxCoreVersion = '1.15.0'
+    
+    // Compose
+    composeBomVersion = '2025.02.00'
+    androidxNavigationVersion = '2.8.8'
+    androidxLifecycleVersion = '2.8.7'
+    
+    // Hilt
+    hiltVersion = '2.55'
+    
+    // Room
+    roomVersion = '2.6.1'
+    
+    // Retrofit & Networking
+    retrofitVersion = '2.11.0'
+    okhttpVersion = '4.12.0'
+    
+    // Serialization
+    kotlinxSerializationVersion = '1.8.0'
+    
+    // WorkManager
+    workVersion = '2.10.0'
+    
+    // DataStore
+    dataStoreVersion = '1.1.3'
+
+    // Testing
     junitVersion = '4.13.2'
-    androidxJunitVersion = '1.3.0'
-    androidxEspressoCoreVersion = '3.7.0'
-    cordovaAndroidVersion = '14.0.1'
+    androidxJunitVersion = '1.2.1'
+    androidxEspressoCoreVersion = '3.6.1'
 }

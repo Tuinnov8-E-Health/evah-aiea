@@ -144,6 +144,13 @@ export async function createEncounter(encounter: Omit<Encounter, 'id'>) {
   });
 }
 
+export async function submitClinicianReview(encounterId: string, notes: string) {
+  return apiFetch<{ encounter: Encounter }>(`/api/encounters/${encodeURIComponent(encounterId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ notes }),
+  });
+}
+
 export async function fetchRegistry() {
   return apiFetch<{ registry: { patients: Patient[]; clinicians: any[]; chws: any[]; facilities: any[] } }>('/api/registry', {
     method: 'GET',

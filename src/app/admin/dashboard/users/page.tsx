@@ -21,22 +21,21 @@ export default function ManageUsersPage() {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 mb-6">
-            <Input placeholder="Search by name, email, or phone..." className="flex-1" />
-            <Select>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="patient">Patient</SelectItem>
-                    <SelectItem value="lab-personnel">Lab Personnel</SelectItem>
-                    <SelectItem value="lab-owner">Lab Owner</SelectItem>
-                </SelectContent>
-            </Select>
-            <Button>Search</Button>
+          <Input placeholder="Search by name, email, or phone..." className="flex-1" />
+          <Select>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="chw">Community Health Worker</SelectItem>
+              <SelectItem value="clinician">Clinician</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button>Search</Button>
         </div>
         <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">Search results will appear here.</p>
+          <p className="text-muted-foreground">Search results will appear here.</p>
         </div>
       </CardContent>
     </Card>

@@ -1,8 +1,23 @@
-import { createEncounter } from '@/lib/client-api';
+import { createEncounter, fetchPatients } from '@/lib/client-api';
 import type { Encounter } from '@/lib/types';
-import { getPendingEncounters, removeFromQueue } from '@/lib/offline-queue';
+import { getPendingEncounters, removeFromQueue, upsertPatients } from '@/lib/offline-queue';
 import { Network } from '@capacitor/network';
 import { App } from '@capacitor/app';
+
+/**
+ * Syncs the local patient registry with the server.
+ */
+export async function syncPatients(): Promise<void> {
+    try {
+        const { patients } = await fetchPatients();
+        if (patients && Array.isArray(patients)) {
+            await upsertPatients(patients);
+        }
+    } catch (e) {
+        // Silently fail if offline or server is down
+        console.error('Failed to sync patients:', e);
+    }
+}
 
 /**
  * Attempts to flush locally queued encounters to the server.
@@ -40,6 +55,7 @@ export function startSyncListeners(): void {
         Network.addListener('networkStatusChange', (status) => {
             if ((status as any).connected) {
                 void flushQueue();
+                void syncPatients();
             }
         });
     } catch (e) {
@@ -49,6 +65,7 @@ export function startSyncListeners(): void {
     try {
         App.addListener('resume', () => {
             void flushQueue();
+            void syncPatients();
         });
     } catch (e) {
         // Plugin not available; ignore

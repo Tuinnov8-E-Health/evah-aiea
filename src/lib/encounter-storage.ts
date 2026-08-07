@@ -39,6 +39,15 @@ export function appendStoredEncounter<T extends StoredEncounter = StoredEncounte
     return writeStoredEncounters(nextEncounters);
 }
 
+export function updateStoredEncounter<T extends StoredEncounter = StoredEncounter>(
+    encounterId: string,
+    updates: Partial<T>
+): T[] {
+    const current = readStoredEncounters<T>();
+    const next = current.map((e) => (e.id === encounterId ? { ...e, ...updates } : e));
+    return writeStoredEncounters(next);
+}
+
 export function mergeStoredEncounters<T extends StoredEncounter = StoredEncounter>(
     seedEncounters: T[],
     storedEncounters: T[] = readStoredEncounters<T>(),

@@ -12,7 +12,7 @@
  */
 
 import Dexie from 'dexie';
-import type { Encounter } from '@/lib/types';
+import type { Encounter, Patient } from '@/lib/types';
 
 type PendingRecord = {
     localId: string;
@@ -22,18 +22,23 @@ type PendingRecord = {
 
 class OfflineDB extends Dexie {
     pendingEncounters!: Dexie.Table<PendingRecord, string>;
+    patients!: Dexie.Table<Patient, string>;
 
     constructor() {
         super('aiea-offline');
         this.version(1).stores({
-            // primary key: localId
             pendingEncounters: '&localId, queuedAt',
+        });
+        this.version(2).stores({
+            pendingEncounters: '&localId, queuedAt',
+            patients: '&id, name, status',
         });
     }
 }
 
 const db = new OfflineDB();
 
+// --- Encounter Queue Logic ---
 export async function queueEncounter(payload: Encounter): Promise<string> {
     const localId = typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function'
         ? (crypto as any).randomUUID()
@@ -54,6 +59,33 @@ export function getPendingEncounters(): Promise<PendingRecord[]> {
 
 export function removeFromQueue(localId: string): Promise<void> {
     return db.pendingEncounters.delete(localId) as Promise<void>;
+}
+
+// --- Patient Storage Logic ---
+export async function upsertPatients(patients: Patient[]): Promise<void> {
+    await db.patients.bulkPut(patients);
+}
+
+export async function getLocalPatients(): Promise<Patient[]> {
+    return db.patients.toArray();
+}
+
+export async function getPatientByIdLocally(id: string): Promise<Patient | undefined> {
+    return db.patients.get(id);
+}
+
+export async function searchPatientsLocally(query: string): Promise<Patient[]> {
+    if (!query.trim()) return [];
+
+    const lowerQuery = query.toLowerCase();
+    // Dexie doesn't support native partial string matching in indices for all cases easily,
+    // so we'll use a filter on the name and ID.
+    return db.patients
+        .filter(p =>
+            p.name.toLowerCase().includes(lowerQuery) ||
+            p.id.toLowerCase().includes(lowerQuery)
+        )
+        .toArray();
 }
 
 export type { PendingRecord };

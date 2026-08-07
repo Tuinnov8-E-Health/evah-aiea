@@ -30,6 +30,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fetchPatients, fetchRegistry, getStoredUser } from '@/lib/client-api';
 import { mockPatients } from '@/lib/mock-data';
+import { getLocalPatients } from '@/lib/offline-queue';
+import { syncPatients } from '@/lib/sync';
 import { differenceInDays, parseISO, isValid, differenceInYears } from "date-fns";
 
 export default function Dashboard() {
@@ -52,9 +54,17 @@ export default function Dashboard() {
     if (demoMode) {
       setPatients(mockPatients);
     } else {
-      fetchPatients()
-        .then((result) => setPatients(result.patients))
-        .catch(() => setPatients([]));
+      // 1. Load from local storage immediately for fast UI
+      getLocalPatients().then(local => {
+        if (local && local.length > 0) {
+          setPatients(local);
+        }
+      });
+
+      // 2. Trigger a sync and update UI if data changes
+      syncPatients().then(() => {
+        getLocalPatients().then(setPatients);
+      });
     }
 
     fetchRegistry()
@@ -63,7 +73,6 @@ export default function Dashboard() {
   }, []);
 
   const isSupervisor = role === 'supervisor';
-  const isClinician = role === 'clinician';
   const isCHW = role === 'chw';
 
   const urgentCount = patients.filter(p => p.status === 'Urgent').length;
@@ -98,7 +107,7 @@ export default function Dashboard() {
           Habari, {userName}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {isSupervisor ? "System Supervision & Monitoring" : isClinician ? "Clinical Review & CHW Oversight" : "AI Epilepsy Assistant Dashboard"}
+          {isSupervisor ? "System Supervision & Monitoring" : "AI Epilepsy Assistant Dashboard"}
         </p>
       </div>
 
@@ -149,8 +158,8 @@ export default function Dashboard() {
           </>
         )}
 
-        {(isSupervisor || isClinician) && (
-          <Card className={cn("bg-primary/5 border-primary/10", !isSupervisor && "col-span-1")}>
+        {isSupervisor && (
+          <Card className="bg-primary/5 border-primary/10">
             <CardHeader className="p-4 pb-0">
               <UserCheck className="h-5 w-5 text-primary" />
             </CardHeader>
@@ -194,7 +203,7 @@ export default function Dashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-headline font-bold text-primary">
-            {isSupervisor || isClinician ? "Active Case Registry" : "Registered Patients"}
+            {isSupervisor ? "Active Case Registry" : "Registered Patients"}
           </h2>
           <Link href="/dashboard/records" className="text-xs font-semibold text-primary/60 hover:text-primary">
             View All

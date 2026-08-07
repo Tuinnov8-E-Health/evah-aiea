@@ -17,12 +17,14 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, Shield } from 'lucide-react';
 import { login, saveSession } from '@/lib/client-api';
+import { LoginMethodToggle } from '@/components/login-method-toggle';
 
 export default function ClinicianLoginPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('ChangeMe123');
     const [showPassword, setShowPassword] = useState(false);
 
@@ -31,7 +33,7 @@ export default function ClinicianLoginPage() {
         setLoading(true);
 
         try {
-            const response = await login(phoneNumber, password);
+            const response = await login(identifier, password);
             saveSession(response.token, response.user);
             toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
             window.location.href = '/clinician/dashboard';
@@ -85,17 +87,20 @@ export default function ClinicianLoginPage() {
                     <CardContent className="px-0 space-y-4 mt-4">
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Phone Number</Label>
+                                <LoginMethodToggle value={loginMethod} onChange={setLoginMethod} />
+                                <Label htmlFor="identifier">{loginMethod === 'phone' ? 'Phone Number' : 'Email Address'}</Label>
                                 <Input
-                                    id="phone"
-                                    type="tel"
-                                    placeholder="+254700000002"
+                                    id="identifier"
+                                    type={loginMethod === 'phone' ? 'tel' : 'email'}
+                                    inputMode={loginMethod === 'phone' ? 'tel' : 'email'}
+                                    autoComplete={loginMethod === 'phone' ? 'tel' : 'email'}
+                                    placeholder={loginMethod === 'phone' ? '+254700000000' : 'you@example.com'}
                                     className="h-12 text-lg"
-                                    value={phoneNumber}
+                                    value={identifier}
                                     onChange={(e) => {
-                                        const nextPhone = e.target.value;
-                                        setPhoneNumber(nextPhone);
-                                        if (nextPhone.trim()) {
+                                        const nextIdentifier = e.target.value;
+                                        setIdentifier(nextIdentifier);
+                                        if (nextIdentifier.trim()) {
                                             setPassword('ChangeMe123');
                                         }
                                     }}

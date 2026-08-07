@@ -293,5 +293,18 @@
   "clinicians": [],
   "chws": [],
   "facilities": [],
-  "sessions": []
+  "sessions": [
+    {
+      "token": "3aecf9a8-c6e1-4257-b17b-1b9944b0877d",
+      "userId": "user-clinician",
+      "createdAt": "2026-08-07T20:44:34.748Z",
+      "expiresAt": "2026-08-14T20:44:34.748Z"
+    },
+    {
+      "token": "5ada0d6d-d1b9-4012-855c-d3f2e252083f",
+      "userId": "user-clinician",
+      "createdAt": "2026-08-07T20:47:28.137Z",
+      "expiresAt": "2026-08-14T20:47:28.137Z"
+    }
+  ]
 }

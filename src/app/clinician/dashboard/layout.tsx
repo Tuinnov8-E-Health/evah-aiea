@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,8 +18,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getStoredUser } from '@/lib/client-api';
 import { cn } from '@/lib/utils';
+import { ClinicianReportsProvider, useClinicianReportsContext } from './clinician-reports-context';
 
-export default function ClinicianDashboardLayout({ children }: { children: ReactNode }) {
+function ClinicianDashboardLayoutContent({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const [activeView, setActiveView] = useState('home');
     const [profile, setProfile] = useState({
@@ -26,6 +29,7 @@ export default function ClinicianDashboardLayout({ children }: { children: React
         facilityCode: '13077',
         county: 'Nairobi',
     });
+    const { newReportsCount, myReportsCount, urgentFlagsCount } = useClinicianReportsContext();
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -97,7 +101,7 @@ export default function ClinicianDashboardLayout({ children }: { children: React
 
                     <div className="mt-auto rounded-2xl border border-primary/10 bg-card/70 p-3 text-sm text-muted-foreground">
                         <p className="font-semibold text-foreground">Review summary</p>
-                        <p className="mt-1">12 pending reports • 3 urgent flags • 5 reviewed this week</p>
+                        <p className="mt-1">{newReportsCount} pending reports • {urgentFlagsCount} urgent flags • {myReportsCount} reviewed this week</p>
                     </div>
                 </aside>
 
@@ -119,7 +123,7 @@ export default function ClinicianDashboardLayout({ children }: { children: React
                             <div className="flex items-center gap-2">
                                 <div className="hidden items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-sm text-primary md:flex">
                                     <BarChart3 className="h-4 w-4" />
-                                    <span className="font-medium">12 pending</span>
+                                    <span className="font-medium">{newReportsCount} pending</span>
                                 </div>
 
                                 <div className="group relative">
@@ -130,9 +134,9 @@ export default function ClinicianDashboardLayout({ children }: { children: React
                                     <div className="pointer-events-none absolute right-0 top-full mt-2 w-72 rounded-xl border bg-background p-3 text-sm shadow-lg opacity-0 transition-all group-hover:pointer-events-auto group-hover:opacity-100">
                                         <p className="font-semibold text-foreground">System summary</p>
                                         <ul className="mt-2 space-y-2 text-muted-foreground">
-                                            <li>• 12 new reports awaiting review</li>
-                                            <li>• 3 red-flag cases need urgent triage</li>
-                                            <li>• 5 reviews completed this week</li>
+                                            <li>• {newReportsCount} new reports awaiting review</li>
+                                            <li>• {urgentFlagsCount} red-flag cases need urgent triage</li>
+                                            <li>• {myReportsCount} reviews completed this week</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -173,5 +177,13 @@ export default function ClinicianDashboardLayout({ children }: { children: React
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ClinicianDashboardLayout({ children }: { children: ReactNode }) {
+    return (
+        <ClinicianReportsProvider>
+            <ClinicianDashboardLayoutContent>{children}</ClinicianDashboardLayoutContent>
+        </ClinicianReportsProvider>
     );
 }

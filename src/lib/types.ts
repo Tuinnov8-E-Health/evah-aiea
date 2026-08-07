@@ -52,6 +52,13 @@ export type Encounter = {
   authorId: string;
   authorName: string;
   authorRole: string;
+  reviewStatus?: 'new' | 'reviewed';
+  clinicianReview?: {
+    notes: string;
+    reviewedAt: string;
+    reviewedById: string;
+    reviewedByName: string;
+  };
   isClinicianUpdated?: boolean;
 };
 

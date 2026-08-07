@@ -336,10 +336,39 @@ export async function addEncounter(payload: Omit<Encounter, 'id'>, user: StoredU
     authorRole: user.role,
     patientId: payload.patientId || payload.subject,
     subject: payload.patientId || payload.subject,
+    reviewStatus: payload.reviewStatus ?? 'new',
   } as Encounter;
   db.encounters.push(newEncounter);
   await writeDb(db);
   return newEncounter;
+}
+
+export async function updateEncounterReview(
+  encounterId: string,
+  review: { notes: string },
+  user: StoredUser
+): Promise<Encounter | null> {
+  const db = await readDb();
+  const encounterIndex = db.encounters.findIndex((encounter) => encounter.id === encounterId);
+  if (encounterIndex === -1) {
+    return null;
+  }
+
+  const encounter = db.encounters[encounterIndex];
+  const updatedEncounter: Encounter = {
+    ...encounter,
+    reviewStatus: 'reviewed',
+    clinicianReview: {
+      notes: review.notes,
+      reviewedAt: new Date().toISOString(),
+      reviewedById: user.id,
+      reviewedByName: user.name,
+    },
+  };
+
+  db.encounters[encounterIndex] = updatedEncounter;
+  await writeDb(db);
+  return updatedEncounter;
 }
 
 export async function getRegistry(user?: StoredUser | null) {

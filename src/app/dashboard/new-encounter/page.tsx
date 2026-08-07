@@ -50,7 +50,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Encounter } from '@/lib/types';
 import { appendStoredEncounter } from '@/lib/encounter-storage';
-import { queueEncounter } from '@/lib/offline-queue';
+import { queueEncounter, searchPatientsLocally } from '@/lib/offline-queue';
 
 type Step = 'consent' | 'patient' | 'infectious' | 'classify' | 'seizure_details' | 'symptoms' | 'adherence' | 'review' | 'assessment' | 'report' | 'final';
 
@@ -237,7 +237,7 @@ function NewEncounterContent() {
       authorId: user?.id || 'unknown-user',
       authorName: user?.name || 'Unknown',
       authorRole: user?.role?.toUpperCase() || 'UNKNOWN',
-      isClinicianUpdated: user?.role === 'clinician'
+      isClinicianUpdated: user?.role === 'clinician' // clinician role no longer reaches this page via /dashboard; retained for type compatibility
     };
 
     appendStoredEncounter(newEncounter);
@@ -330,16 +330,31 @@ function NewEncounterContent() {
     }
   };
 
-  const searchPatients = (query: string) => {
+  const searchPatients = async (query: string) => {
     setPatientSearchQuery(query);
-    setSearchingPatients(true);
-    setPatientSearchResults([]);
-    setSelectedExistingPatient(null);
-
-    setTimeout(() => {
-      setSearchingPatients(false);
+    if (!query.trim()) {
       setPatientSearchResults([]);
-    }, 400);
+      return;
+    }
+
+    setSearchingPatients(true);
+
+    try {
+      const results = await searchPatientsLocally(query);
+      // Map to the internal UI format (full_name, community_register_id)
+      const mapped = results.map(p => ({
+        id: p.id,
+        full_name: p.name,
+        community_register_id: p.id, // Assuming ID is the register ID for now
+        sex: p.gender
+      }));
+      setPatientSearchResults(mapped);
+    } catch (e) {
+      console.error('Search failed:', e);
+      setPatientSearchResults([]);
+    } finally {
+      setSearchingPatients(false);
+    }
   };
 
   return (

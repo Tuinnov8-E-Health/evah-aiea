@@ -25,16 +25,16 @@ export function SidebarNav() {
   }, []);
 
   const baseItems = [
-    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'supervisor'] },
     {
       href: "/dashboard/assess",
-      icon: role === 'clinician' ? ClipboardList : Brain,
-      label: role === 'clinician' ? "Review" : "AI",
-      roles: ['chw', 'clinician']
+      icon: Brain,
+      label: "AI",
+      roles: ['chw']
     },
-    { href: "/dashboard/reports", icon: Send, label: "Reports", roles: ['chw', 'clinician'] },
-    { href: "/dashboard/drafts", icon: FileText, label: "Drafts", roles: ['chw', 'clinician'] },
-    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/reports", icon: Send, label: "Reports", roles: ['chw'] },
+    { href: "/dashboard/drafts", icon: FileText, label: "Drafts", roles: ['chw'] },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'supervisor'] },
     { href: "/dashboard/analytics", icon: DataIcon, label: "Data", roles: ['supervisor'] },
   ];
 

@@ -48,7 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
 import { Encounter } from "@/lib/types"; import { appendStoredEncounter } from '@/lib/encounter-storage';
-import { queueEncounter } from '@/lib/offline-queue';
+import { queueEncounter, getLocalPatients } from '@/lib/offline-queue';
 type Message = {
   id: string;
   role: 'user' | 'ai';
@@ -114,7 +114,14 @@ function AssessContent() {
       const savedRole = localStorage.getItem('demo_role') || 'chw';
       setRole(savedRole);
     }
-    setPatients(mockPatients);
+
+    getLocalPatients().then(local => {
+      if (local && local.length > 0) {
+        setPatients(local);
+      } else {
+        setPatients(mockPatients);
+      }
+    });
 
     if (urlPatientId) {
       handleSelectPatient(urlPatientId);

@@ -60,16 +60,16 @@ export function DashboardHeader() {
   }, []);
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'supervisor'] },
     {
       href: "/dashboard/assess",
-      icon: role === 'clinician' ? ClipboardList : Brain,
-      label: role === 'clinician' ? "Review" : "AI",
-      roles: ['chw', 'clinician']
+      icon: Brain,
+      label: "AI",
+      roles: ['chw']
     },
-    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/records", icon: List, label: role === 'supervisor' ? "Users" : "Records", roles: ['chw', 'supervisor'] },
     { href: "/dashboard/analytics", icon: Activity, label: "Data", roles: ['supervisor'] },
-    { href: "/dashboard/history", icon: History, label: "History", roles: ['chw', 'clinician', 'supervisor'] },
+    { href: "/dashboard/history", icon: History, label: "History", roles: ['chw', 'supervisor'] },
   ];
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));

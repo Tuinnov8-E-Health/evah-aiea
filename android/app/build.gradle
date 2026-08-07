@@ -1,54 +1,108 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
+    id 'kotlinx-serialization'
+}
 
 android {
     namespace = "com.tuinnov8.aiea"
     compileSdk = rootProject.ext.compileSdkVersion
+
     defaultConfig {
         applicationId "com.tuinnov8.aiea"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        vectorDrawables {
+            useSupportLibrary true
         }
     }
+
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-}
 
-repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    buildFeatures {
+        compose true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion "1.5.15"
+    }
+
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
-    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-    implementation project(':capacitor-android')
+    // Core
+    implementation "androidx.core:core-ktx:$androidxCoreVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$androidxLifecycleVersion"
+    implementation "androidx.activity:activity-compose:$androidxActivityVersion"
+
+    // Compose
+    implementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.ui:ui-graphics"
+    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation "androidx.compose.material3:material3"
+    implementation "androidx.navigation:navigation-compose:$androidxNavigationVersion"
+
+    // Hilt
+    implementation "com.google.dagger:hilt-android:$hiltVersion"
+    kapt "com.google.dagger:hilt-compiler:$hiltVersion"
+    implementation "androidx.hilt:hilt-navigation-compose:1.2.0"
+
+    // Room
+    implementation "androidx.room:room-runtime:$roomVersion"
+    implementation "androidx.room:room-ktx:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
+
+    // Retrofit & Networking
+    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-kotlinx-serialization:$retrofitVersion"
+    implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
+
+    // Serialization
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion"
+
+    // WorkManager
+    implementation "androidx.work:work-runtime-ktx:$workVersion"
+
+    // DataStore
+    implementation "androidx.datastore:datastore-preferences:$dataStoreVersion"
+
+    // Testing
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    implementation project(':capacitor-cordova-android-plugins')
+    androidTestImplementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4"
+    debugImplementation "androidx.compose.ui:ui-tooling"
+    debugImplementation "androidx.compose.ui:ui-test-manifest"
 }
 
-apply from: 'capacitor.build.gradle'
-
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+kapt {
+    correctErrorTypes true
 }
