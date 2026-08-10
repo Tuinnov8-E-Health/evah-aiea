@@ -5,6 +5,7 @@ plugins {
     id 'com.google.dagger.hilt.android'
     id 'kotlinx-serialization'
     id 'org.jetbrains.kotlin.plugin.compose'
+    id 'com.google.devtools.ksp'
 }
 
 android {
@@ -73,7 +74,7 @@ dependencies {
     // Room
     implementation "androidx.room:room-runtime:$roomVersion"
     implementation "androidx.room:room-ktx:$roomVersion"
-    kapt "androidx.room:room-compiler:$roomVersion"
+    ksp "androidx.room:room-compiler:$roomVersion"
 
     // Retrofit & Networking
     implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
