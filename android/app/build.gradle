@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
     id 'kotlinx-serialization'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -41,10 +42,6 @@ android {
 
     buildFeatures {
         compose true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion "1.5.15"
     }
 
     packagingOptions {
