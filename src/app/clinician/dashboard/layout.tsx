@@ -15,17 +15,21 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getStoredUser } from '@/lib/client-api';
+import { useAuth } from '@/lib/auth-context';
+import { RoleGuard } from '@/components/role-guard';
 import { cn } from '@/lib/utils';
 
 export default function ClinicianDashboardLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const [activeView, setActiveView] = useState('home');
-    const [profile, setProfile] = useState({
-        name: 'Dr. Antony Ngemu',
-        role: 'Clinician',
-        facilityCode: '13077',
-        county: 'Nairobi',
-    });
+    const { user, logout } = useAuth();
+    
+    const profile = {
+        name: user?.name || 'Dr. Antony Ngemu',
+        role: user?.role === 'clinician' ? 'Clinician' : (user?.role || 'Clinician'),
+        facilityCode: user?.facilityCode || '13077',
+        county: user?.county || user?.location || 'Nairobi',
+    };
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -41,17 +45,7 @@ export default function ClinicianDashboardLayout({ children }: { children: React
         );
     }, [pathname]);
 
-    useEffect(() => {
-        const savedUser = getStoredUser();
-        if (savedUser) {
-            setProfile({
-                name: savedUser.name || 'Dr. Antony Ngemu',
-                role: savedUser.role === 'clinician' ? 'Clinician' : savedUser.role,
-                facilityCode: savedUser.facilityCode || '13077',
-                county: savedUser.county || savedUser.location || 'Nairobi',
-            });
-        }
-    }, []);
+    }, [pathname]);
 
     const navItems = [
         { href: '/clinician/dashboard', label: 'Home', icon: Home, key: 'home' },
@@ -61,6 +55,7 @@ export default function ClinicianDashboardLayout({ children }: { children: React
     ];
 
     return (
+        <RoleGuard allowedRoles={['clinician']}>
         <div className="min-h-screen bg-muted/10">
             <div className="flex min-h-screen flex-col md:flex-row">
                 <aside className="hidden w-64 flex-col border-r bg-background/95 p-4 shadow-sm md:flex">
@@ -154,8 +149,8 @@ export default function ClinicianDashboardLayout({ children }: { children: React
                                         <DropdownMenuItem asChild>
                                             <Link href="/dashboard/profile">Profile</Link>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link href="/clinician">Logout</Link>
+                                        <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                                            Logout
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -173,5 +168,6 @@ export default function ClinicianDashboardLayout({ children }: { children: React
                 </div>
             </div>
         </div>
+        </RoleGuard>
     );
 }

@@ -259,3 +259,86 @@ export async function analyzeClinicalHistory(payload: { historyJson: string }) {
     body: JSON.stringify({ historyJson: payload.historyJson }),
   });
 }
+
+// Additional wrappers for Dashboards
+
+export async function fetchFollowups() {
+  const data = await apiFetch<any>('/followups/', { method: 'GET' });
+  return { followups: data.results || data };
+}
+
+export async function createFollowup(payload: any) {
+  return apiFetch<any>('/followups/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function updateFollowup(id: string, payload: any) {
+  return apiFetch<any>(`/followups/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export async function fetchReferrals() {
+  const data = await apiFetch<any>('/referrals/', { method: 'GET' });
+  return { referrals: data.results || data };
+}
+
+export async function createReferral(payload: any) {
+  return apiFetch<any>('/referrals/', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function fetchFacilities() {
+  const data = await apiFetch<any>('/facilities/', { method: 'GET' });
+  return { facilities: data.results || data };
+}
+
+export async function fetchUsers() {
+  const data = await apiFetch<any>('/users/', { method: 'GET' });
+  return { users: data.results || data };
+}
+
+export async function updateUser(id: string, payload: any) {
+  return apiFetch<any>(`/users/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export async function approveUser(id: string, is_approved: boolean) {
+  return apiFetch<any>(`/users/${id}/approve/`, { method: 'POST', body: JSON.stringify({ is_approved }) });
+}
+
+export async function updateEncounter(id: string, payload: any) {
+  return apiFetch<any>(`/encounters/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export async function fetchAnalyticsOverview() {
+  return apiFetch<any>('/analytics/overview/', { method: 'GET' });
+}
+
+export async function fetchNotifications() {
+  const data = await apiFetch<any>('/notifications/', { method: 'GET' });
+  return { notifications: data.results || data };
+}
+
+export async function fetchLabRequests() {
+  const data = await apiFetch<any>('/lab-requests/', { method: 'GET' });
+  return { labRequests: data.results || data };
+}
+
+export async function updateLabRequest(id: string, payload: any) {
+  return apiFetch<any>(`/lab-requests/${id}/`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export async function fetchLabTests() {
+  const data = await apiFetch<any>('/lab-tests/', { method: 'GET' });
+  return { labTests: data.results || data };
+}
+
+export async function fetchLabEarnings() {
+  const data = await apiFetch<any>('/lab-earnings/', { method: 'GET' });
+  return { labEarnings: data.results || data };
+}
+
+export async function fetchMessages() {
+  const data = await apiFetch<any>('/chat-messages/', { method: 'GET' });
+  return { messages: data.results || data };
+}
+
+export async function sendMessage(payload: any) {
+  return apiFetch<any>('/chat-messages/', { method: 'POST', body: JSON.stringify(payload) });
+}

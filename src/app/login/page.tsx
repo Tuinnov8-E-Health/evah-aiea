@@ -35,7 +35,20 @@ export default function LoginPage() {
       const response = await login(identifier, password);
       saveSession(response.access_token, response.refresh_token, response.user);
       toast({ title: 'Login Success', description: `Logged in as ${response.user.role.toUpperCase()}` });
-      router.push('/dashboard');
+      
+      // Redirect based on role
+      const role = response.user.role;
+      if (role === 'clinician') {
+        router.push('/clinician/dashboard');
+      } else if (role === 'lab_owner') {
+        router.push('/lab-owner/dashboard');
+      } else if (role === 'technician') {
+        router.push('/technician/dashboard');
+      } else if (role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard'); // CHW and Supervisor
+      }
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Login Failed', description: error?.message || 'Unable to authenticate.' });
     } finally {

@@ -17,7 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getMe, clearSession, getStoredUser } from '@/lib/client-api';
+import { getStoredUser } from '@/lib/client-api';
+import { useAuth } from '@/lib/auth-context';
+import { RoleGuard } from '@/components/role-guard';
 
 export default function DashboardLayout({
   children,
@@ -25,51 +27,19 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState('chw');
-  const [userName, setUserName] = useState('Care Team');
-
-  useEffect(() => {
-    const sessionUser = getStoredUser();
-    const demoMode = typeof window !== 'undefined' && localStorage.getItem('is_demo') === 'true';
-
-    if (!sessionUser) {
-      router.push('/login');
-      return;
-    }
-
-    if (demoMode) {
-      setRole(sessionUser.role);
-      setUserName(sessionUser.name);
-      setLoading(false);
-      return;
-    }
-
-    getMe()
-      .then((result) => {
-        setRole(result.user.role);
-        setUserName(result.user.name);
-        setLoading(false);
-      })
-      .catch(() => {
-        clearSession();
-        router.push('/login');
-      });
-  }, [router]);
-
-  if (loading) {
-    return <PageLoader />;
-  }
+  const { user, logout, role } = useAuth();
+  const userName = user?.name || 'Care Team';
+  const displayRole = role || 'chw';
 
   const handleLogout = () => {
-    clearSession();
-    router.push('/login');
+    logout();
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-muted/30">
-      {/* Desktop Sidebar */}
-      <SidebarNav />
+    <RoleGuard allowedRoles={['chw', 'supervisor']}>
+      <div className="flex min-h-screen w-full bg-muted/30">
+        {/* Desktop Sidebar */}
+        <SidebarNav />
 
       <div className="flex flex-1 flex-col md:pl-44">
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-6">
@@ -77,7 +47,7 @@ export default function DashboardLayout({
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-foreground">{userName}</span>
               <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-                {role.toUpperCase()}
+                {displayRole.toUpperCase()}
               </span>
             </div>
           </div>
@@ -100,7 +70,7 @@ export default function DashboardLayout({
                 <DropdownMenuLabel>
                   <div className="flex flex-col">
                     <span className="text-sm font-bold">{userName}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase">{role}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase">{displayRole}</span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -126,8 +96,9 @@ export default function DashboardLayout({
         </main>
 
         {/* Mobile Navigation */}
-        <MobileNav userRole={role} />
+        <MobileNav userRole={displayRole} />
       </div>
     </div>
+    </RoleGuard>
   );
 }

@@ -14,15 +14,11 @@ import {
   Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from '@/lib/auth-context';
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const [role, setRole] = useState('chw');
-
-  useEffect(() => {
-    const savedRole = localStorage.getItem('demo_role');
-    if (savedRole) setRole(savedRole);
-  }, []);
+  const { role } = useAuth();
 
   const baseItems = [
     { href: "/dashboard", icon: Home, label: "Home", roles: ['chw', 'clinician', 'supervisor'] },
