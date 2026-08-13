@@ -6,15 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ShieldAlert, TrendingUp, AlertTriangle, ShieldCheck, ClipboardList, BarChart3 } from 'lucide-react';
 import { PageLoader } from '@/components/ui/loader';
-import { mockPatients } from '@/lib/mock-data';
+import { fetchAnalyticsOverview, getStoredUser } from '@/lib/client-api';
 
 export default function SafetyDashboard() {
   const [role, setRole] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [urgentCount, setUrgentCount] = useState<number>(0);
 
   useEffect(() => {
     setIsClient(true);
-    setRole(localStorage.getItem('demo_role'));
+    const storedUser = getStoredUser();
+    setRole(storedUser?.role || localStorage.getItem('demo_role'));
+
+    fetchAnalyticsOverview().then((data: any) => {
+      setUrgentCount(data?.urgent_count ?? data?.urgentCount ?? 0);
+    }).catch(() => {});
   }, []);
 
   if (!isClient) return <PageLoader />;
@@ -31,7 +37,6 @@ export default function SafetyDashboard() {
     );
   }
 
-  const urgentCount = mockPatients.filter(p => p.status === 'Urgent').length || 0;
 
   return (
     <div className="space-y-6 pb-20">

@@ -3,10 +3,9 @@
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchEncounters, getStoredUser } from '@/lib/client-api';
+import { fetchEncounters, getStoredUser, fetchPatients } from '@/lib/client-api';
 import { PageLoader } from '@/components/ui/loader';
 import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Users } from 'lucide-react';
-import { mockEncounters, mockPatients } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { mergeStoredEncounters } from '@/lib/encounter-storage';
 import {
@@ -26,6 +25,7 @@ function ClinicianDashboardContent({
     profile,
 }: {
     reports: any[];
+    patients: any[];
     selectedReport: any | null;
     setSelectedReport: (report: any | null) => void;
     showReportDialog: boolean;
@@ -59,13 +59,13 @@ function ClinicianDashboardContent({
     }, [pathname]);
     const chwSubmittedReports = reports.filter((encounter) => encounter.authorRole?.toUpperCase() === 'CHW' || encounter.authorRole?.toLowerCase() === 'chw');
     const reviewedReports = chwSubmittedReports.slice(0, 2);
-    const reviewedPatients = mockPatients.map((patient) => ({
+    const reviewedPatients = patients.map((patient) => ({
         ...patient,
         reportCount: chwSubmittedReports.filter((report) => report.patientId === patient.id).length,
     }));
     const selectedPatient = reviewedPatients.find((patient) => patient.id === patientId) || null;
     const selectedPatientHistory = chwSubmittedReports.filter((report) => report.patientId === selectedPatient?.id);
-    const selectedPatientName = selectedReport ? mockPatients.find((patient) => patient.id === selectedReport.patientId)?.name || 'Patient' : 'Patient';
+    const selectedPatientName = selectedReport ? patients.find((patient) => patient.id === selectedReport.patientId)?.fullName || 'Patient' : 'Patient';
 
     return (
         <div className="space-y-6">
@@ -78,7 +78,7 @@ function ClinicianDashboardContent({
 
                         <Card className="border border-border/60">
                             <CardHeader>
-                                <CardTitle>{selectedPatient.name}</CardTitle>
+                                <CardTitle>{selectedPatient.fullName}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="rounded-2xl border bg-muted/20 p-4">
@@ -115,7 +115,7 @@ function ClinicianDashboardContent({
                                         className="flex w-full items-center justify-between rounded-xl border bg-card/60 p-4 text-left transition hover:bg-muted/40"
                                     >
                                         <div>
-                                            <p className="font-semibold text-foreground">{patient.name}</p>
+                                            <p className="font-semibold text-foreground">{patient.fullName}</p>
                                             <p className="text-sm text-muted-foreground">{patient.address?.text || 'No address listed'}</p>
                                         </div>
                                         <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
@@ -161,7 +161,7 @@ function ClinicianDashboardContent({
                                 <Users className="h-4 w-4" />
                                 <span className="text-sm font-semibold">Patients</span>
                             </div>
-                            <p className="mt-2 text-2xl font-semibold">{mockPatients.length}</p>
+                            <p className="mt-2 text-2xl font-semibold">{patients.length}</p>
                         </div>
                     </div>
 
@@ -183,7 +183,7 @@ function ClinicianDashboardContent({
                                     >
                                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
-                                                <p className="font-semibold text-foreground">{report.id} • {mockPatients.find((patient) => patient.id === report.patientId)?.name || 'Patient'}</p>
+                                                <p className="font-semibold text-foreground">{report.id} • {patients.find((patient) => patient.id === report.patientId)?.fullName || 'Patient'}</p>
                                                 <p className="mt-1 text-sm text-muted-foreground">{report.summary}</p>
                                             </div>
                                             <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
@@ -228,6 +228,7 @@ function ClinicianDashboardContent({
 export default function ClinicianDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [reports, setReports] = useState<any[]>([]);
+    const [patients, setPatients] = useState<any[]>([]);
     const [selectedReport, setSelectedReport] = useState<any | null>(null);
     const [showReportDialog, setShowReportDialog] = useState(false);
     const [profile, setProfile] = useState({
@@ -255,8 +256,9 @@ export default function ClinicianDashboardPage() {
                 specialty: sessionUser.specialty || 'Clinical Review / Neurology Support',
             });
 
-            const seededReports = mockEncounters.map((encounter) => ({ ...encounter, viewed: false, viewerNotes: '' }));
+            const seededReports: any[] = [];
             let serverReports: any[] = [];
+            let serverPatients: any[] = [];
 
             try {
                 const response = await fetchEncounters();
@@ -268,8 +270,16 @@ export default function ClinicianDashboardPage() {
             } catch {
                 serverReports = [];
             }
+            
+            try {
+                const response = await fetchPatients();
+                serverPatients = response?.patients ?? [];
+            } catch {
+                serverPatients = [];
+            }
 
             setReports(mergeStoredEncounters(seededReports, undefined, serverReports));
+            setPatients(serverPatients);
             setLoading(false);
         };
 
@@ -284,6 +294,7 @@ export default function ClinicianDashboardPage() {
         <Suspense fallback={<PageLoader />}>
             <ClinicianDashboardContent
                 reports={reports}
+                patients={patients}
                 selectedReport={selectedReport}
                 setSelectedReport={setSelectedReport}
                 showReportDialog={showReportDialog}

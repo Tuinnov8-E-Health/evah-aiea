@@ -36,19 +36,22 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "../theme-toggle";
 import Image from "next/image";
-import { mockNotifications } from '@/lib/mock-data';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { getStoredUser } from '@/lib/client-api';
+import { getStoredUser, fetchNotifications } from '@/lib/client-api';
 import { useOfflineQueue } from '@/hooks/use-offline-queue';
 
 export function DashboardHeader() {
   const pathname = usePathname();
   const [role, setRole] = useState('chw');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
   const { pendingCount } = useOfflineQueue();
 
   useEffect(() => {
+    fetchNotifications().then((res: any) => {
+      setNotifications(res.notifications || []);
+    }).catch(() => {});
     const savedRole = localStorage.getItem('demo_role');
     const storedUser = getStoredUser();
     if (storedUser) {
@@ -138,14 +141,14 @@ export function DashboardHeader() {
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel>Alerts</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {mockNotifications.slice(0, 3).map((notification) => (
+          {notifications.slice(0, 3).map((notification) => (
             <DropdownMenuItem key={notification.id} asChild>
-              <Link href={notification.href} className="flex items-start gap-3">
-                <notification.icon className="h-4 w-4 text-muted-foreground mt-1" />
+              <Link href={notification.href || '/dashboard/notifications'} className="flex items-start gap-3">
+                <Bell className="h-4 w-4 text-muted-foreground mt-1" />
                 <div className="flex flex-col">
-                  <span>{notification.text}</span>
+                  <span>{notification.text || notification.message}</span>
                   <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+                    {notification.timestamp ? formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true }) : ''}
                   </span>
                 </div>
               </Link>

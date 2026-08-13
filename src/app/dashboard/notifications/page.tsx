@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Bell, MessageSquare, AlertCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { mockNotifications } from '@/lib/mock-data';
+import { fetchNotifications } from '@/lib/client-api';
 
 interface NotificationSettings {
   appointments: boolean;
@@ -33,10 +33,17 @@ export default function NotificationsPage() {
     smsNotifications: true,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
     setActiveView(tab === 'settings' ? 'settings' : 'alerts');
+
+    fetchNotifications().then((res: any) => {
+      setNotifications(res.notifications || res.results || []);
+    }).catch(() => {
+      setNotifications([]);
+    });
   }, [searchParams]);
 
   const handleToggle = (key: keyof NotificationSettings) => {
@@ -81,7 +88,7 @@ export default function NotificationsPage() {
     },
   ];
 
-  const unreadCount = mockNotifications.filter((notification) => !notification.read).length;
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,7 +132,12 @@ export default function NotificationsPage() {
 
         {activeView === 'alerts' ? (
           <div className="space-y-4">
-            {mockNotifications.map((notification) => (
+            {notifications.length === 0 ? (
+              <div className="py-12 text-center">
+                <Bell className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm font-medium text-muted-foreground">No notifications yet.</p>
+              </div>
+            ) : notifications.map((notification) => (
               <Card key={notification.id} className="border border-muted/40">
                 <CardContent className="space-y-3">
                   <div className="flex items-start gap-3">

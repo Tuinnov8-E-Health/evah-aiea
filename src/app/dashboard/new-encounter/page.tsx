@@ -35,7 +35,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { runClinicalLogic } from '@/lib/clinical-engine/engine';
 import { Recommendation, ClinicalInput } from '@/lib/clinical-engine/types';
-import { createEncounter, getStoredUser, UserSession } from '@/lib/client-api';
+import { createEncounter, getStoredUser, UserSession, fetchPatients } from '@/lib/client-api';
 import {
   Dialog,
   DialogContent,
@@ -330,16 +330,37 @@ function NewEncounterContent() {
     }
   };
 
-  const searchPatients = (query: string) => {
+  const searchPatients = async (query: string) => {
     setPatientSearchQuery(query);
     setSearchingPatients(true);
     setPatientSearchResults([]);
     setSelectedExistingPatient(null);
 
-    setTimeout(() => {
+    if (!query.trim()) {
       setSearchingPatients(false);
+      return;
+    }
+
+    try {
+      const res = await fetchPatients();
+      const patients = res.patients || [];
+      const lowerQuery = query.toLowerCase();
+      const filtered = patients.filter((p: any) => 
+        p.fullName?.toLowerCase().includes(lowerQuery) || 
+        p.enrolledById?.toLowerCase().includes(lowerQuery) ||
+        p.id?.toLowerCase().includes(lowerQuery)
+      );
+      setPatientSearchResults(filtered.map((p: any) => ({
+        id: p.id,
+        full_name: p.fullName,
+        community_register_id: p.enrolledById || p.id,
+        sex: p.gender
+      })));
+    } catch {
       setPatientSearchResults([]);
-    }, 400);
+    } finally {
+      setSearchingPatients(false);
+    }
   };
 
   return (

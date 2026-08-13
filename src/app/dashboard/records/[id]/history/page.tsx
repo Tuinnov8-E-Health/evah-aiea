@@ -25,7 +25,8 @@ import { Badge } from '@/components/ui/badge';
 import { format, isAfter, subHours, isValid, differenceInHours, eachDayOfInterval, startOfDay } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { usePrint } from '@/hooks/usePrint';
-import { mockPatients, mockEncounters } from '@/lib/mock-data';
+import { fetchPatientById, fetchEncounters } from '@/lib/client-api';
+import { useAuth } from '@/lib/auth-context';
 import {
   Dialog,
   DialogContent,
@@ -64,18 +65,24 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
     setSessionEncounters(readStoredEncounters());
   }, []);
 
-  const role = typeof window !== 'undefined' ? localStorage.getItem('demo_role') : 'chw';
+  const { user } = useAuth();
+  const role = user?.role || 'chw';
   const isClinician = role === 'clinician';
 
-  const patient = mockPatients.find(p => p.id === id);
+  const [patient, setPatient] = useState<any | null>(null);
+  const [baseEncounters, setBaseEncounters] = useState<Encounter[]>([]);
+
+  useEffect(() => {
+    fetchPatientById(id).then(setPatient).catch(() => {});
+    fetchEncounters(id).then(res => setBaseEncounters(res.encounters)).catch(() => {});
+  }, [id]);
 
   const patientEncounters = useMemo(() => {
-    const base = mockEncounters.filter(e => e.patientId === id);
-    const session = sessionEncounters.filter(e => e.patientId === id);
-    return [...session, ...base].sort((a, b) =>
+    const session = sessionEncounters.filter(e => e.patient === id || e.patientId === id);
+    return [...session, ...baseEncounters].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [id, sessionEncounters]);
+  }, [id, sessionEncounters, baseEncounters]);
 
   const filteredEncounters = useMemo(() => {
     if (!patientEncounters) return [];
@@ -151,9 +158,9 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
         <section className="mb-10 bg-white">
           <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Profile</h2>
           <div className="grid grid-cols-2 gap-y-2 text-sm bg-white">
-            <p><strong>Full Name:</strong> {p.name}</p>
-            <p><strong>Age / Sex:</strong> {p.age}Y • {p.gender}</p>
-            <p><strong>Location:</strong> {p.location}</p>
+            <p><strong>Full Name:</strong> {p.fullName}</p>
+            <p><strong>DOB / Sex:</strong> {p.birthDate} • {p.gender}</p>
+            <p><strong>Location:</strong> {p.address?.text || 'N/A'}</p>
           </div>
         </section>
 
@@ -246,9 +253,9 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-headline font-bold text-primary">{patient.name}</h1>
+        <h1 className="text-2xl font-headline font-bold text-primary">{patient.fullName}</h1>
         <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground italic">CHW: {patient.chwName}</p>
+          <p className="text-sm text-muted-foreground italic">CHW ID: {patient.enrolledById}</p>
           <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest">{patient.status}</Badge>
         </div>
       </div>
@@ -355,9 +362,9 @@ export default function PatientHistoryPage({ params }: { params: Promise<{ id: s
                 <section className="bg-white">
                   <h2 className="text-sm font-bold uppercase border-b pb-1 mb-3">1. Patient Profile</h2>
                   <div className="grid grid-cols-2 gap-y-1 text-xs bg-white">
-                    <p><strong>Name:</strong> {patient.name}</p>
-                    <p><strong>Age/Sex:</strong> {patient.age}Y • {patient.gender}</p>
-                    <p><strong>Author:</strong> {selectedEncounter.authorName}</p>
+                    <p><strong>Name:</strong> {patient.fullName}</p>
+                    <p><strong>DOB/Sex:</strong> {patient.birthDate} • {patient.gender}</p>
+                    <p><strong>Author ID:</strong> {selectedEncounter.authorId}</p>
                   </div>
                 </section>
 

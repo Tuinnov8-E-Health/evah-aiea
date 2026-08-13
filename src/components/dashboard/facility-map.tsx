@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, Phone, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
-import { mockHealthFacilities } from '@/lib/mock-data';
+import { fetchFacilities } from '@/lib/client-api';
 import type { HealthFacility, UrgencyLevel } from '@/lib/clinical-engine/types';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,14 +19,17 @@ export function FacilityMap({ urgency, patientLocation, onFacilitySelected }: Fa
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Logic: Match required care level to nearest capable facility
     const targetType = urgency === 'EMERGENCY' ? 'specialist' : urgency === 'URGENT' ? 'district' : 'local';
-    const filtered = mockHealthFacilities.filter(f => f.type === targetType || (urgency === 'EMERGENCY' && f.type === 'specialist'));
-    
-    setTimeout(() => {
-      setNearest(filtered[0] || mockHealthFacilities[0]);
+
+    fetchFacilities().then((res: any) => {
+      const facilities: HealthFacility[] = res.facilities || [];
+      const filtered = facilities.filter((f) => f.type === targetType || (urgency === 'EMERGENCY' && f.type === 'specialist'));
+      setNearest(filtered[0] || facilities[0] || null);
       setIsLoading(false);
-    }, 800);
+    }).catch(() => {
+      setNearest(null);
+      setIsLoading(false);
+    });
   }, [urgency]);
 
   const openGoogleMaps = () => {

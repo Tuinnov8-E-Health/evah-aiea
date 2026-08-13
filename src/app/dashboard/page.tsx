@@ -30,7 +30,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fetchPatients, fetchRegistry, getStoredUser } from '@/lib/client-api';
 import { useAuth } from '@/lib/auth-context';
-import { mockPatients } from '@/lib/mock-data';
 import { differenceInDays, parseISO, isValid, differenceInYears } from "date-fns";
 
 export default function Dashboard() {
@@ -201,13 +200,13 @@ export default function Dashboard() {
               return (
                 <Card key={patient.id} className="border-none shadow-sm bg-card/50">
                   <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
-                      {patient.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <Link href={`/dashboard/records/${patient.id}/history`} className="hover:underline decoration-primary/40 underline-offset-2">
-                        <h3 className="font-bold text-foreground truncate">{patient.name}</h3>
-                      </Link>
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-muted-foreground uppercase">
+                        {patient.fullName?.charAt(0) || 'P'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/dashboard/records/${patient.id}/history`} className="hover:underline decoration-primary/40 underline-offset-2">
+                          <h3 className="font-bold text-foreground truncate">{patient.fullName}</h3>
+                        </Link>
                       <div className="flex flex-col gap-1 mt-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{getAge(patient.birthDate)}Y • {patient.gender}</span>

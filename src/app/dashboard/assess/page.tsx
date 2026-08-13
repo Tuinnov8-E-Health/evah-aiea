@@ -42,8 +42,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { mockPatients } from "@/lib/mock-data";
-import { createEncounter, getStoredUser, UserSession } from '@/lib/client-api';
+import { createEncounter, getStoredUser, UserSession, fetchPatients } from '@/lib/client-api';
 import { useToast } from "@/hooks/use-toast";
 import { usePrint } from "@/hooks/usePrint";
 import { format } from "date-fns";
@@ -114,7 +113,7 @@ function AssessContent() {
       const savedRole = localStorage.getItem('demo_role') || 'chw';
       setRole(savedRole);
     }
-    setPatients(mockPatients);
+    fetchPatients().then(res => setPatients(res.patients)).catch(() => {});
 
     if (urlPatientId) {
       handleSelectPatient(urlPatientId);
@@ -146,7 +145,7 @@ function AssessContent() {
     setSelectedPatientId(id);
     setShowPatientPicker(false);
 
-    const patientName = patients?.find(p => p.id === id)?.name || "the patient";
+    const patientName = patients?.find(p => p.id === id)?.fullName || "the patient";
     setMessages(prev => [
       ...prev,
       {
@@ -234,7 +233,7 @@ function AssessContent() {
     }
 
     const patient = patients.find(p => p.id === selectedPatientId);
-    const answer = `AI Generated Report from combined inputs for ${patient?.name}:\n${collectedText}`;
+    const answer = `AI Generated Report from combined inputs for ${patient?.fullName}:\n${collectedText}`;
     addMessage({
       id: generateId(),
       role: 'ai',
@@ -288,7 +287,7 @@ function AssessContent() {
 
     if (inputText.startsWith('@')) {
       const mentionName = inputText.slice(1).toLowerCase();
-      const matchedPatient = patients.find(p => p.name.toLowerCase().includes(mentionName));
+      const matchedPatient = patients.find(p => p.fullName?.toLowerCase().includes(mentionName));
       if (matchedPatient) {
         handleSelectPatient(matchedPatient.id);
         setInputText("");
@@ -325,7 +324,7 @@ function AssessContent() {
         await runOnDeviceAnalysis(input);
       } else {
         const answer = selectedPatient
-          ? `I received your input for ${selectedPatient.name}. Here is a clinical note based on the text provided:\n${input}`
+          ? `I received your input for ${selectedPatient.fullName}. Here is a clinical note based on the text provided:\n${input}`
           : `I received your request. Based on the information given, here is a general clinical summary:\n${input}`;
 
         setMessages(prev => [...prev, {
@@ -488,9 +487,9 @@ function AssessContent() {
             <section className="bg-white">
               <h2 className="text-base font-bold uppercase border-b pb-1 mb-4">1. Patient Profile</h2>
               <div className="grid grid-cols-2 gap-y-2 text-sm">
-                <p><strong>Full Name:</strong> {selectedPatient?.name}</p>
-                <p><strong>Age / Sex:</strong> {selectedPatient?.age}Y • {selectedPatient?.gender}</p>
-                <p><strong>Address:</strong> {selectedPatient?.location}</p>
+                <p><strong>Full Name:</strong> {selectedPatient?.fullName}</p>
+                <p><strong>DOB / Sex:</strong> {selectedPatient?.birthDate} • {selectedPatient?.gender}</p>
+                <p><strong>Address:</strong> {selectedPatient?.address?.text || 'N/A'}</p>
               </div>
             </section>
 
@@ -638,10 +637,10 @@ function AssessContent() {
                 patients.map(patient => (
                   <button key={patient.id} onClick={() => handleSelectPatient(patient.id)} className="w-full text-left p-4 rounded-xl border hover:bg-muted transition-colors group">
                     <div className="flex justify-between items-start">
-                      <span className="font-bold text-primary group-hover:text-primary/80">{patient.name}</span>
+                      <span className="font-bold text-primary group-hover:text-primary/80">{patient.fullName}</span>
                       <Badge variant="outline" className={cn("text-[10px] uppercase", patient.status === 'Urgent' ? "border-red-200 text-red-600 bg-red-50" : "")}>{patient.status}</Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{patient.location} • {patient.gender}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{patient.address?.text} • {patient.gender}</p>
                   </button>
                 ))
               ) : (
@@ -658,7 +657,7 @@ function AssessContent() {
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => setShowPatientPicker(true)} className="gap-2 rounded-full h-9">
               <UserCircle className="h-4 w-4 text-primary" />
-              <span className="max-w-[120px] truncate">{selectedPatient?.name || "Select Patient"}</span>
+              <span className="max-w-[120px] truncate">{selectedPatient?.fullName || "Select Patient"}</span>
             </Button>
             {selectedPatient && (
               <Button variant="ghost" size="icon" onClick={() => setSelectedPatientId(null)} className="h-8 w-8 text-muted-foreground"><X className="h-4 w-4" /></Button>
@@ -755,7 +754,7 @@ function AssessContent() {
               e.target.value = '';
             }} />
             <Textarea
-              placeholder={selectedPatient ? `Describe symptoms for ${selectedPatient.name}...` : "Ask a general epilepsy question or type @patient..."}
+              placeholder={selectedPatient ? `Describe symptoms for ${selectedPatient.fullName}...` : "Ask a general epilepsy question or type @patient..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               className="min-h-[48px] h-full w-full resize-none rounded-full border-none focus-visible:ring-0 py-3 pl-3 pr-28 bg-transparent text-sm"

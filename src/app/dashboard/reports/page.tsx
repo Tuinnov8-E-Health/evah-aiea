@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MessageSquare, Send, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { mockEncounters, mockPatients } from '@/lib/mock-data';
-import { fetchEncounters } from '@/lib/client-api';
+import { fetchEncounters, fetchPatients } from '@/lib/client-api';
 import { Encounter } from '@/lib/types';
 import { mergeStoredEncounters, writeStoredEncounters } from '@/lib/encounter-storage';
 
@@ -20,17 +19,12 @@ type ReportItem = Encounter & {
 export default function ReportsPage() {
     const router = useRouter();
     const [reports, setReports] = useState<ReportItem[]>([]);
+    const [patients, setPatients] = useState<any[]>([]);
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
-    useEffect(() => {
-        const demoReports: ReportItem[] = mockEncounters.map((encounter) => ({
-            ...encounter,
-            viewed: false,
-            viewerNotes: ''
-        }));
-
-        const loadReports = async () => {
+        const loadReportsAndPatients = async () => {
             let serverReports: ReportItem[] = [];
+            let serverPatients: any[] = [];
 
             try {
                 const response = await fetchEncounters();
@@ -43,7 +37,14 @@ export default function ReportsPage() {
                 serverReports = [];
             }
 
-            const combinedReports = mergeStoredEncounters<ReportItem>(demoReports, undefined, serverReports);
+            try {
+                const response = await fetchPatients();
+                serverPatients = response?.patients ?? [];
+            } catch {
+                serverPatients = [];
+            }
+
+            const combinedReports = mergeStoredEncounters<ReportItem>([], undefined, serverReports);
             const parsed = combinedReports.map((report: ReportItem) => ({
                 ...report,
                 viewed: report.viewed ?? false,
@@ -51,9 +52,10 @@ export default function ReportsPage() {
             }));
 
             setReports(parsed);
+            setPatients(serverPatients);
         };
 
-        void loadReports();
+        void loadReportsAndPatients();
     }, []);
 
     const saveReports = (nextReports: ReportItem[]) => {
@@ -98,7 +100,7 @@ export default function ReportsPage() {
             return acc;
         }, new Map<string, { patientId: string; reports: ReportItem[] }>());
 
-        return mockPatients
+        return patients
             .map((patient) => {
                 const group = groups.get(patient.id);
                 const sorted = (group?.reports ?? []).slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -112,16 +114,16 @@ export default function ReportsPage() {
                 };
             })
             .sort((a, b) => {
-                if (!a.latestReport && !b.latestReport) return a.patient.name.localeCompare(b.patient.name);
+                if (!a.latestReport && !b.latestReport) return a.patient.fullName.localeCompare(b.patient.fullName);
                 if (!a.latestReport) return 1;
                 if (!b.latestReport) return -1;
                 return new Date(b.latestReport.date).getTime() - new Date(a.latestReport.date).getTime();
             });
-    }, [reports]);
+    }, [reports, patients]);
 
     const selectedReport = reports.find((report) => report.id === selectedReportId);
     const selectedPatient = selectedReport
-        ? mockPatients.find((patient) => patient.id === selectedReport.patientId)
+        ? patients.find((patient) => patient.id === selectedReport.patientId)
         : undefined;
 
     return (
@@ -157,7 +159,7 @@ export default function ReportsPage() {
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-muted-foreground">Viewing report</p>
                             <h2 className="truncate text-xl font-semibold text-primary">
-                                {mockPatients.find((p) => p.id === selectedReport.patientId)?.name || `Case #${selectedReport.patientId.slice(-6)}`}
+                                {patients.find((p) => p.id === selectedReport.patientId)?.fullName || `Case #${selectedReport.patientId.slice(-6)}`}
                             </h2>
                         </div>
                     </div>
@@ -166,7 +168,7 @@ export default function ReportsPage() {
                         <CardContent className="space-y-6 p-6 min-w-0">
                             <div className="text-center border-b border-primary/20 pb-6 mb-6">
                                 <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Clinical Encounter Report</p>
-                                <h2 className="mt-2 text-2xl font-headline font-bold text-primary">{selectedPatient?.name || `Case #${selectedReport.patientId.slice(-6)}`}</h2>
+                                <h2 className="mt-2 text-2xl font-headline font-bold text-primary">{selectedPatient?.fullName || `Case #${selectedReport.patientId.slice(-6)}`}</h2>
                                 <p className="text-sm text-muted-foreground mt-2">{format(new Date(selectedReport.date), 'PPP p')}</p>
                             </div>
 
@@ -174,10 +176,10 @@ export default function ReportsPage() {
                                 <div className="rounded-2xl bg-muted/10 p-4">
                                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Patient Information</p>
                                     <div className="space-y-2 text-sm text-slate-700">
-                                        <p><strong>Name:</strong> {selectedPatient?.name || 'Unknown'}</p>
+                                        <p><strong>Name:</strong> {selectedPatient?.fullName || 'Unknown'}</p>
                                         <p><strong>Gender:</strong> {selectedPatient?.gender || 'Unknown'}</p>
-                                        <p><strong>Address:</strong> {selectedPatient?.address.text || 'Unknown'}</p>
-                                        <p><strong>Contact:</strong> {selectedPatient?.telecom.value || 'Unknown'}</p>
+                                        <p><strong>Address:</strong> {selectedPatient?.address?.text || 'Unknown'}</p>
+                                        <p><strong>Contact:</strong> {selectedPatient?.telecom?.value || 'Unknown'}</p>
                                     </div>
                                 </div>
                                 <div className="rounded-2xl bg-muted/10 p-4">
@@ -280,7 +282,7 @@ export default function ReportsPage() {
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
                                             <div className="min-w-0 space-y-1">
                                                 <p className="text-sm font-semibold text-primary truncate">
-                                                    {patient?.name || `Case #${group.patientId.slice(-6)}`}
+                                                    {patient?.fullName || `Case #${group.patientId.slice(-6)}`}
                                                 </p>
                                                 <p className="text-sm text-muted-foreground truncate">
                                                     {latest ? latest.summary : `${patient?.status || 'Stable'} patient profile ready for a new encounter.`}

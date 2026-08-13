@@ -39,28 +39,33 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { mockPatients, mockClinicians, mockHealthFacilities } from "@/lib/mock-data";
+import { fetchPatients, fetchUsers, fetchFacilities } from "@/lib/client-api";
+import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { differenceInDays, parseISO, isValid } from "date-fns";
 
 export default function RecordsPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth();
   const [role, setRole] = useState<string>('chw');
   const [activeTab, setActiveTab] = useState("patients");
   const [showAddHospital, setShowAddHospital] = useState(false);
+  
+  const [patients, setPatients] = useState<any[]>([]);
+  const [clinicians, setClinicians] = useState<any[]>([]);
+  const [facilities, setFacilities] = useState<any[]>([]);
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('demo_role');
-    if (savedRole) setRole(savedRole);
-  }, []);
+    if (user) setRole(user.role);
+    
+    fetchPatients().then(res => setPatients(res.patients)).catch(() => {});
+    fetchUsers().then(res => setClinicians(res.users.filter((u: any) => u.role === 'clinician'))).catch(() => {});
+    fetchFacilities().then(res => setFacilities(res.facilities)).catch(() => {});
+  }, [user]);
 
   const isSupervisor = role === 'supervisor';
   const isClinician = role === 'clinician';
-
-  const patients = mockPatients;
-  const clinicians = mockClinicians;
-  const facilities = mockHealthFacilities;
 
   const handleApprove = (name: string) => {
     toast({
@@ -80,12 +85,12 @@ export default function RecordsPage() {
 
   const filteredPatients = patients
     .filter((p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
   const filteredClinicians = clinicians.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.firstName || c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -157,15 +162,15 @@ export default function RecordsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground truncate">{clinician.name}</h3>
-                        <Badge variant={clinician.status === 'Approved' ? 'secondary' : 'outline'} className="text-[8px] h-4">
-                          {clinician.status}
+                        <h3 className="font-semibold text-foreground truncate">{clinician.firstName || clinician.email}</h3>
+                        <Badge variant={clinician.is_approved ? 'secondary' : 'outline'} className="text-[8px] h-4">
+                          {clinician.is_approved ? 'Approved' : 'Pending'}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.hospital}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{clinician.role} • {clinician.facilityCode || 'N/A'}</p>
                     </div>
-                    {clinician.status === 'Pending' && (
-                      <Button size="sm" onClick={() => handleApprove(clinician.name)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
+                    {!clinician.is_approved && (
+                      <Button size="sm" onClick={() => handleApprove(clinician.firstName || clinician.email)} className="bg-green-600 hover:bg-green-700 h-8 text-[10px] font-bold">
                         Approve
                       </Button>
                     )}
@@ -185,9 +190,9 @@ export default function RecordsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground truncate">{facility.name}</h3>
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">{facility.type} Pathway</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">{facility.facility_type} Pathway</p>
                       <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-                        <MapPin className="h-3 w-3" /> {facility.coordinates.lat.toFixed(4)}, {facility.coordinates.lng.toFixed(4)}
+                        <MapPin className="h-3 w-3" /> {facility.latitude}, {facility.longitude}
                       </div>
                     </div>
                     <DropdownMenu>
@@ -282,16 +287,16 @@ function PatientCard({ patient, isRestricted }: { patient: any, isRestricted: bo
     <Card className="border-none shadow-sm bg-card/50 hover:shadow-md transition-shadow">
       <CardContent className="p-4 flex items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
-          {patient.name?.charAt(0) || 'P'}
+          {patient.fullName?.charAt(0) || 'P'}
         </div>
         <div className="flex-1 min-w-0">
           <Link href={`/dashboard/records/${patient.id}/history`} className="hover:underline decoration-primary/40 underline-offset-2">
-            <h3 className="font-bold text-foreground truncate">{patient.name}</h3>
+            <h3 className="font-bold text-foreground truncate">{patient.fullName}</h3>
           </Link>
           <div className="flex flex-col gap-0.5 mt-0.5">
-            <p className="text-[10px] text-foreground/70">{patient.location}</p>
-            {patient.chwName && (
-              <p className="text-[10px] font-bold text-foreground/80 uppercase">Responsible CHW: {patient.chwName}</p>
+            <p className="text-[10px] text-foreground/70">{patient.address?.text}</p>
+            {patient.enrolledById && (
+              <p className="text-[10px] font-bold text-foreground/80 uppercase">Responsible CHW ID: {patient.enrolledById}</p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-2">

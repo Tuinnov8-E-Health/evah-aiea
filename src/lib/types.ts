@@ -4,12 +4,14 @@ import type { LucideIcon } from "lucide-react";
 export type Role = 'chw' | 'clinician' | 'supervisor';
 
 /**
- * FHIR-Aligned Patient Type
+ * Backend-Aligned Patient Type
  */
 export type Patient = {
   id: string;
-  active: boolean;
-  name: string; // HumanName.text
+  communityRegisterId: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
   gender: 'male' | 'female' | 'other' | 'unknown';
   birthDate: string; // YYYY-MM-DD
   status: 'Stable' | 'Urgent' | 'Follow-up';
@@ -22,37 +24,52 @@ export type Patient = {
     city?: string;
     district?: string;
   };
-  updatedAt?: string;
+  nationalIdNumber?: string;
+  facilityId?: string;
+  enrolledById?: number;
   nextFollowUpDate?: string;
-  chwId?: string;
-  chwName?: string;
+  updatedAt: string;
+  createdAt: string;
 };
 
 /**
- * FHIR-Aligned Encounter Type
+ * Backend-Aligned Encounter Type
  */
 export type Encounter = {
   id: string;
+  patient: string; // UUID of patient
   status: 'planned' | 'arrived' | 'triaged' | 'in-progress' | 'finished' | 'cancelled';
-  subject?: string; // Patient ID
-  patientId: string;
-  date: string; // period.start equivalent
+  encounterClass: string;
+  date: string;
+  authorId: number;
+  localId?: string;
+  rulesetVersion?: string;
   summary: string;
-  redFlags: string[]; // maps to reasonCode
+  redFlags: string[];
   recommendation: {
     action: string;
-    urgencyLevel: string;
+    urgency_level?: string;
+    urgencyLevel?: string;
+    referral_destination?: string;
     referralDestination?: string;
     antiStigmaMessages?: string[];
     safetyAdvice?: string[];
     followUpPlan?: string;
+    clinical_reasoning?: string;
   };
-  type: 'Initial' | 'Routine' | 'Emergency';
+  riskScore: number;
+  riskBand: string;
+  urgencyLevel: string;
+  intakeData: Record<string, any>;
+  isClinicianUpdated: boolean;
   discordanceNote?: string;
-  authorId: string;
-  authorName: string;
-  authorRole: string;
-  isClinicianUpdated?: boolean;
+  reviewedById?: number;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  seizureClassifications: any[];
+  observations: any[];
 };
 
 export type UserProfile = {

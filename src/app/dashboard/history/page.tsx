@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { User, ClipboardList, ExternalLink } from "lucide-react";
-import { mockEncounters, mockPatients } from "@/lib/mock-data";
+import { fetchEncounters, fetchPatients } from "@/lib/client-api";
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -24,26 +24,34 @@ import { Encounter } from "@/lib/types";
 
 export default function HistoryPage() {
   const [sessionEncounters, setSessionEncounters] = useState<Encounter[]>([]);
-  const [isDemo, setIsDemo] = useState(false);
+  const [patients, setPatients] = useState<any[]>([]);
 
   useEffect(() => {
-    const demoFlag = localStorage.getItem('is_demo') === 'true';
-    setIsDemo(demoFlag);
-    
-    // Load logged encounters from session
-    const saved = localStorage.getItem('session_encounters');
-    if (saved) {
-      setSessionEncounters(JSON.parse(saved));
-    }
+    const loadData = async () => {
+      try {
+        const patientsRes = await fetchPatients();
+        setPatients(patientsRes.patients || []);
+      } catch (e) {
+        console.error(e);
+      }
+      
+      try {
+        const encountersRes = await fetchEncounters();
+        const serverEncounters = encountersRes.encounters || [];
+        setSessionEncounters(serverEncounters);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadData();
   }, []);
 
   const allEncounters = useMemo(() => {
-    const base = isDemo ? mockEncounters : [];
-    // Merge and sort by date descending
-    return [...sessionEncounters, ...base].sort((a, b) => 
+    // Sort by date descending
+    return [...sessionEncounters].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [sessionEncounters, isDemo]);
+  }, [sessionEncounters]);
 
   return (
     <div className="space-y-6">
@@ -58,7 +66,7 @@ export default function HistoryPage() {
           {allEncounters.length > 0 ? (
             <Accordion type="single" collapsible className="w-full space-y-3">
               {allEncounters.map((encounter) => {
-                const patient = mockPatients.find(p => p.id === encounter.patientId);
+                const patient = patients.find(p => p.id === encounter.patientId);
                 return (
                   <AccordionItem key={encounter.id} value={encounter.id} className="border rounded-xl bg-card px-4 shadow-sm">
                     <AccordionTrigger className="hover:no-underline py-4">
@@ -71,7 +79,7 @@ export default function HistoryPage() {
                                 className="font-bold text-primary hover:underline z-10"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {patient.name}
+                                {patient.fullName}
                               </Link>
                             ) : (
                               <span className="font-bold text-primary">
