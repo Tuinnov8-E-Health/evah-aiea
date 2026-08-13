@@ -45,8 +45,6 @@ export default function ClinicianDashboardLayout({ children }: { children: React
         );
     }, [pathname]);
 
-    }, [pathname]);
-
     const navItems = [
         { href: '/clinician/dashboard', label: 'Home', icon: Home, key: 'home' },
         { href: '/clinician/dashboard?view=new-reports', label: 'New Reports', icon: ClipboardList, key: 'new-reports' },

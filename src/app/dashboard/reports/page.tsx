@@ -22,6 +22,7 @@ export default function ReportsPage() {
     const [patients, setPatients] = useState<any[]>([]);
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
+    useEffect(() => {
         const loadReportsAndPatients = async () => {
             let serverReports: ReportItem[] = [];
             let serverPatients: any[] = [];
