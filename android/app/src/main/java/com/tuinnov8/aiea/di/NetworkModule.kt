@@ -1,6 +1,6 @@
 package com.tuinnov8.aiea.di
 
-import retrofit2.converter.kotlinxserialization.asConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
