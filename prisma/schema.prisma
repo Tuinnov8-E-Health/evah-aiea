@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CHW
+  CLINICIAN
+  SUPERVISOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(CHW)
+  imageUrl      String?
+  location      String?
+  phone         String?   @unique
+  dob           DateTime?
+  gender        Gender?
+  address       Json?
+  allowLocation Boolean?  @default(true)
+  county        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions              Session[]
+  authoredEncounters    Encounter[] @relation("EncounterAuthor")
+  reviewedEncounters    Encounter[] @relation("EncounterReviewer")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model Patient {
+  id                 String    @id @default(cuid())
+  active             Boolean   @default(true)
+  name               String
+  gender             Gender
+  birthDate          DateTime
+  telecom            Json?
+  address            Json?
+  status             String
+  registrationDate   DateTime  @default(now())
+  chwId              String?
+  chwName            String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  encounters Encounter[]
+}
+
+model Encounter {
+  id                   String    @id @default(cuid())
+  status               String
+  subject              String?
+  patientId            String
+  patient              Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  date                 DateTime
+  summary              String
+  redFlags             String[]
+  recommendation       Json
+  type                 String
+  discordanceNote      String?
+  authorId             String
+  author               User      @relation("EncounterAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  reviewStatus         String?   @default("new")
+  clinicianReview      Json?
+  isClinicianUpdated   Boolean   @default(false)
+  reviewedById         String?
+  reviewer             User?     @relation("EncounterReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model Facility {
+  id        String   @id @default(cuid())
+  active    Boolean  @default(true)
+  name      String
+  type      String
+  telecom   String?
+  address   String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
